@@ -64,7 +64,8 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .divider{width:48px;height:1px;background:var(--grad);margin:14px auto 0}
 .logo-blend{mix-blend-mode:screen;filter:contrast(1.06) brightness(1.12) drop-shadow(0 0 10px rgba(201,162,75,.28))}
 
-.announce{background:#000;color:var(--gold);text-align:center;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;padding:9px 12px;border-bottom:1px solid var(--line-d)}
+.announce{display:block;background:#C8102E;color:#fff;text-align:center;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;padding:9px 12px;border-bottom:1px solid var(--line-d);text-decoration:none;cursor:pointer}
+.announce:hover{background:#A50D26}
 
 header{position:sticky;top:0;z-index:50;background:rgba(13,13,13,.93);backdrop-filter:blur(8px);border-bottom:1px solid var(--line-d)}
 .nav{display:flex;align-items:center;gap:28px;padding:8px 24px;max-width:var(--maxw);margin:0 auto}
@@ -288,7 +289,7 @@ footer .copy{border-top:1px solid var(--line-d);margin-top:36px;padding-top:18px
 </head>
 <body>
 
-<div class="announce">✦ Timeless Gold-Plated Jewelry ✦ Tarnish-Resistant &amp; Gentle For Sensitive Skin ✦ A Free Gift With Every Order ✦</div>
+<a href="#" class="announce" onclick="shop('sale');return false">• SALE NOW ON • Limited-Time Prices On Selected Jewelry • Shop The Sale •</a>
 
 <header>
   <div class="nav">
@@ -320,7 +321,7 @@ footer .copy{border-top:1px solid var(--line-d);margin-top:36px;padding-top:18px
       <div class="hero-copy">
         <span class="eyebrow">Toria's Glam Haven · Est 2024</span>
         <h1>Wear how you<br><em class="gold-text">want to feel.</em></h1>
-        <p>Timeless, gold-plated jewelry made to move with you, from quiet mornings to the moments you'll never forget. Tarnish-resistant, gentle on sensitive skin, and always arriving gift-boxed with a little something extra. Because you were never meant to blend in.</p>
+        <p>Timeless gold-plated jewelry that's tarnish-resistant and gentle on sensitive skin. Every order arrives gift-boxed with a free gift, ready for everyday wear or the days that matter most.</p>
         <div class="hero-cta">
           <button class="btn" onclick="shop('all')">Shop the Collection</button>
           <button class="btn ghost" onclick="go('about')">Our Story</button>
@@ -367,8 +368,8 @@ footer .copy{border-top:1px solid var(--line-d);margin-top:36px;padding-top:18px
       <div class="imgwrap"><img id="storyImg" src="" alt="Gold jewelry styled"></div>
       <div>
         <span class="eyebrow">Our Story</span>
-        <h2 class="gold-text">More than jewelry. A feeling.</h2>
-        <p>Every Toria's Glam Haven piece is gold-plated, hypoallergenic and made to last, designed in Kenya for the woman who wants to feel something when she gets dressed. Versatile enough for the office, a date, a wedding or a Sunday, our jewelry is made to carry your confidence across every occasion.</p>
+        <h2 class="gold-text">More than jewelry</h2>
+        <p>Every Toria's Glam Haven piece is gold-plated, hypoallergenic and made to last. Designed in Kenya, our jewelry is versatile enough for the office, a date or a wedding, and it goes with just about anything you wear.</p>
         <button class="btn ghost" onclick="go('about')">Discover Our Story</button>
       </div>
     </div>
@@ -525,8 +526,8 @@ footer .copy{border-top:1px solid var(--line-d);margin-top:36px;padding-top:18px
 <section class="view" id="view-about">
   <div class="panel">
     <div class="section-head"><span class="eyebrow">Designed with love in Kenya</span><h1 class="gold-text">Our Story</h1><div class="divider"></div></div>
-    <p style="color:var(--muted-d);text-align:center;max-width:38em;margin:0 auto 18px">Toria's Glam Haven began with a simple belief, that the right piece of jewelry can change how you carry yourself. Not just an accessory, but a quiet reminder of who you are.</p>
-    <p style="color:var(--muted-d);text-align:center;max-width:38em;margin:0 auto">We craft and curate gold-plated pieces that are tarnish-resistant and hypoallergenic, finished by hand and presented in an elegant gift box, complete with a free gift and a custom occasion card. Timeless and versatile, made to move with you from the everyday to your biggest celebrations. We help you wear, and give, confidence.</p>
+    <p style="color:var(--muted-d);text-align:center;max-width:38em;margin:0 auto 18px">Toria's Glam Haven started with a simple idea: that the right piece of jewelry can change how you feel when you wear it.</p>
+    <p style="color:var(--muted-d);text-align:center;max-width:38em;margin:0 auto">We curate gold-plated pieces that are tarnish-resistant and hypoallergenic, then pack every order in an elegant gift box with a free gift and a custom occasion card. Pieces that work for the everyday and for the days you want to celebrate.</p>
     <div style="text-align:center;margin-top:22px"><span class="policy">Please note: goods once sold cannot be returned.</span></div>
     <div style="text-align:center;margin-top:30px"><button class="btn" onclick="shop('all')">Explore the Collection</button></div>
   </div>
@@ -683,7 +684,7 @@ function quickView(id){
     <h3 style="font-family:var(--serif);font-size:1.8rem;color:var(--champagne);margin:4px 0">${p.name}</h3>
     <div style="font-family:var(--serif);font-size:1.5rem;color:var(--gold-2);font-weight:600">${ksh(p.price)}${onSale?`<span style="font-size:.9rem;color:var(--muted-d);text-decoration:line-through;margin-left:8px">${ksh(p.was)}</span>`:''}</div>
     <p style="color:var(--muted-d);font-size:.9rem;margin:12px 0 8px">${p.desc||''}</p>
-    <p style="color:var(--gold);font-size:.78rem;margin-bottom:18px">✦ Gold-plated, tarnish-resistant and gentle on sensitive skin ✦ Free gift with every order</p>
+    <p style="color:var(--gold);font-size:.78rem;margin-bottom:18px">Gold-plated, tarnish-resistant and gentle on sensitive skin. Free gift with every order.</p>
     <button class="btn block" onclick="addToCart(${p.id});closeModal()">Add to Bag</button>`;
   document.getElementById('modal').classList.add('show');
 }
@@ -823,7 +824,7 @@ function sendWhatsApp(){
   const giftLine=isGift?`%0AGift: ${occasion||'occasion'} card`:'';
   const discLine=disc?`%0ADiscount ${discount.code}: -${ksh(disc)}`:'';
   const expLine=d.billed?'%0A(Express rider fee billed separately)':'';
-  const msg=`Hello Toria's Glam Haven! ✦%0A%0A*Order ${invNo||genInv()}*%0AName: ${name}%0A%0A${items}%0A%0ADelivery: ${encodeURIComponent(deliveryDetail())}${discLine}${giftLine}${expLine}%0A*Total: ${ksh(total)}*%0A%0APlease confirm my order. I'll pay via M-Pesa Paybill ${PAYBILL}, A/c ${ACCOUNT}.`;
+  const msg=`Hello Toria's Glam Haven!%0A%0A*Order ${invNo||genInv()}*%0AName: ${name}%0A%0A${items}%0A%0ADelivery: ${encodeURIComponent(deliveryDetail())}${discLine}${giftLine}${expLine}%0A*Total: ${ksh(total)}*%0A%0APlease confirm my order. I'll pay via M-Pesa Paybill ${PAYBILL}, A/c ${ACCOUNT}.`;
   window.open(`https://wa.me/254707353520?text=${msg}`,'_blank');
 }
 
