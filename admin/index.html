@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Toria's Glam Haven · Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --black:#0D0D0D; --black-2:#161310; --char:#1E1A15; --panel:#171511;
+  --gold:#C9A24B; --gold-2:#E6C36B; --gold-deep:#9F7C2E;
+  --grad:linear-gradient(135deg,#E6C36B 0%,#C9A24B 45%,#9F7C2E 100%);
+  --champagne:#F4ECDD; --muted:rgba(244,236,221,.60); --muted-2:rgba(244,236,221,.40);
+  --line:rgba(201,162,75,.20); --line-2:rgba(244,236,221,.08);
+  --serif:'Fraunces',Georgia,serif; --sans:'Outfit',system-ui,sans-serif;
+  --ok:#5fbf7f; --warn:#e6b450; --bad:#e0726b;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--black);color:var(--champagne);font-weight:400;line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--serif);font-weight:500;line-height:1.1}
+a{color:inherit;text-decoration:none}
+button,input,select,textarea{font-family:inherit;font-size:.9rem}
+button{cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{background:var(--black-2);border:1px solid var(--line);color:var(--champagne);border-radius:6px;padding:9px 11px;width:100%}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold)}
+.gold{background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.btn{background:var(--grad);color:#1a1206;padding:10px 18px;border-radius:6px;font-weight:600;letter-spacing:.02em;display:inline-flex;align-items:center;gap:7px;justify-content:center}
+.btn:hover{filter:brightness(1.07)}
+.btn.ghost{background:transparent;color:var(--gold);border:1px solid var(--gold)}
+.btn.ghost:hover{background:rgba(201,162,75,.1)}
+.btn.sm{padding:6px 12px;font-size:.8rem}
+.btn.danger{background:transparent;color:var(--bad);border:1px solid rgba(224,114,107,.4)}
+.btn.danger:hover{background:rgba(224,114,107,.12)}
+.muted{color:var(--muted)}.tiny{font-size:.78rem}
+.pill{display:inline-block;padding:3px 10px;border-radius:100px;font-size:.72rem;font-weight:600;letter-spacing:.03em}
+
+/* ---- Login ---- */
+#login{min-height:100vh;display:grid;place-items:center;padding:24px}
+.login-card{width:100%;max-width:380px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:38px 32px;text-align:center}
+.login-card h1{font-size:1.5rem;margin-bottom:4px}
+.login-card form{margin-top:24px;display:grid;gap:12px;text-align:left}
+.brandmark{width:54px;height:54px;border-radius:50%;background:var(--grad);display:grid;place-items:center;margin:0 auto 16px;font-family:var(--serif);color:#1a1206;font-size:1.5rem;font-weight:600}
+
+/* ---- App shell ---- */
+#app{display:none;min-height:100vh;grid-template-columns:230px 1fr}
+.sidebar{background:var(--black-2);border-right:1px solid var(--line-2);padding:22px 16px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:4px}
+.logo-row{display:flex;align-items:center;gap:10px;padding:0 8px 18px;margin-bottom:8px;border-bottom:1px solid var(--line-2)}
+.logo-row .brandmark{width:38px;height:38px;font-size:1.05rem;margin:0}
+.logo-row b{font-family:var(--serif);font-weight:500;font-size:1.02rem;line-height:1.1}
+.nav-item{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:8px;color:var(--muted);font-weight:500;font-size:.9rem;transition:.15s}
+.nav-item:hover{background:rgba(201,162,75,.07);color:var(--champagne)}
+.nav-item.on{background:rgba(201,162,75,.13);color:var(--gold-2)}
+.nav-item .ico{width:20px;text-align:center;font-size:1.05rem}
+.nav-item .badge{margin-left:auto;background:var(--grad);color:#1a1206;font-size:.68rem;font-weight:700;min-width:18px;height:18px;border-radius:100px;display:grid;place-items:center;padding:0 5px}
+.nav-spacer{flex:1}
+.main{padding:30px 34px;max-width:1300px;overflow-x:hidden}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:24px}
+.page-head h1{font-size:1.7rem}
+.page-head p{color:var(--muted);font-size:.9rem;margin-top:2px}
+
+/* ---- Cards & grids ---- */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:26px}
+.kpi{background:var(--panel);border:1px solid var(--line-2);border-radius:12px;padding:18px 18px}
+.kpi .lbl{font-size:.74rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
+.kpi .val{font-family:var(--serif);font-size:1.9rem;margin-top:8px;color:var(--gold-2)}
+.kpi .sub{font-size:.78rem;color:var(--muted);margin-top:3px}
+.card{background:var(--panel);border:1px solid var(--line-2);border-radius:12px;padding:20px;margin-bottom:20px}
+.card h2{font-size:1.15rem;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:900px){.grid-2{grid-template-columns:1fr}}
+
+/* ---- Tables ---- */
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+th{text-align:left;font-weight:600;color:var(--muted);font-size:.74rem;text-transform:uppercase;letter-spacing:.08em;padding:9px 10px;border-bottom:1px solid var(--line-2)}
+td{padding:11px 10px;border-bottom:1px solid var(--line-2);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.tbl-wrap{overflow-x:auto}
+.r{text-align:right}.c{text-align:center}
+.row-click{cursor:pointer}.row-click:hover{background:rgba(201,162,75,.05)}
+
+/* status colours */
+.st-new{background:rgba(230,180,80,.16);color:var(--warn)}
+.st-confirmed{background:rgba(95,160,200,.16);color:#7fb8d8}
+.st-paid{background:rgba(95,191,127,.16);color:var(--ok)}
+.st-packed{background:rgba(160,130,220,.16);color:#b49ce0}
+.st-delivered{background:rgba(95,191,127,.2);color:var(--ok)}
+.st-cancelled{background:rgba(224,114,107,.16);color:var(--bad)}
+.stock-ok{color:var(--ok)}.stock-low{color:var(--warn)}.stock-out{color:var(--bad)}
+
+.bar{height:8px;border-radius:100px;background:var(--grad)}
+.bar-track{background:rgba(244,236,221,.08);border-radius:100px;overflow:hidden;flex:1}
+
+/* modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;place-items:center;padding:20px;z-index:50;overflow-y:auto}
+.modal-bg.show{display:grid}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:26px;width:100%;max-width:540px;max-height:90vh;overflow-y:auto}
+.modal h2{font-size:1.3rem;margin-bottom:18px}
+.field{margin-bottom:13px}
+.field label{display:block;font-size:.78rem;color:var(--muted);margin-bottom:5px;letter-spacing:.03em}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:22px}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--char);border:1px solid var(--gold);color:var(--gold-2);padding:12px 22px;border-radius:8px;font-size:.88rem;z-index:99;opacity:0;transition:.3s;pointer-events:none}
+.toast.show{opacity:1}
+.empty{text-align:center;padding:40px 20px;color:var(--muted)}
+.spin{display:inline-block;width:18px;height:18px;border:2px solid var(--line);border-top-color:var(--gold);border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle}
+@keyframes sp{to{transform:rotate(360deg)}}
+.mobile-only{display:none}
+@media(max-width:760px){
+  #app{grid-template-columns:1fr}
+  .sidebar{position:fixed;left:-240px;z-index:40;transition:.25s;width:230px}
+  .sidebar.open{left:0}
+  .mobile-only{display:inline-flex}
+  .main{padding:18px}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div id="login">
+  <div class="login-card">
+    <div class="brandmark">T</div>
+    <h1>Glam Haven <span class="gold">Management</span></h1>
+    <p class="muted tiny" style="margin-top:6px">Private dashboard — staff only</p>
+    <form id="loginForm">
+      <input id="email" type="email" placeholder="Email" autocomplete="username" required>
+      <input id="password" type="password" placeholder="Password" autocomplete="current-password" required>
+      <button class="btn" type="submit" id="loginBtn">Sign in</button>
+      <p id="loginMsg" class="tiny" style="color:var(--bad);min-height:16px;text-align:center"></p>
+    </form>
+    <p class="tiny muted" id="configWarn" style="margin-top:14px;display:none"></p>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="logo-row">
+      <div class="brandmark">T</div>
+      <b>Glam Haven</b>
+    </div>
+    <a class="nav-item on" data-tab="overview"><span class="ico">📊</span> Overview</a>
+    <a class="nav-item" data-tab="orders"><span class="ico">🛍️</span> Orders <span class="badge" id="newOrdersBadge" style="display:none">0</span></a>
+    <a class="nav-item" data-tab="stock"><span class="ico">📦</span> Stock <span class="badge" id="lowStockBadge" style="display:none">0</span></a>
+    <a class="nav-item" data-tab="catalogue"><span class="ico">🖼️</span> Catalogue</a>
+    <a class="nav-item" data-tab="discounts"><span class="ico">🏷️</span> Discounts</a>
+    <a class="nav-item" data-tab="subscribers"><span class="ico">📧</span> Subscribers</a>
+    <a class="nav-item" data-tab="analytics"><span class="ico">📈</span> Analytics</a>
+    <div class="nav-spacer"></div>
+    <a class="nav-item" href="../index.html" target="_blank"><span class="ico">↗️</span> View shop</a>
+    <a class="nav-item" id="logoutBtn"><span class="ico">🚪</span> Sign out</a>
+  </aside>
+
+  <main class="main">
+    <button class="btn ghost sm mobile-only" id="menuBtn" style="margin-bottom:14px">☰ Menu</button>
+    <div id="content"><div class="empty"><span class="spin"></span></div></div>
+  </main>
+</div>
+
+<div class="modal-bg" id="modalBg"><div class="modal" id="modalContent"></div></div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../assets/config.js"></script>
+<script>
+/* ====================================================================== */
+/*  SETUP CHECK + CLIENT                                                   */
+/* ====================================================================== */
+const C = window.TGH_CONFIG || {};
+let sb = null;
+const configured = C.SUPABASE_URL && !C.SUPABASE_URL.includes('PASTE') && C.SUPABASE_ANON_KEY && !C.SUPABASE_ANON_KEY.includes('PASTE');
+if (configured) {
+  sb = supabase.createClient(C.SUPABASE_URL, C.SUPABASE_ANON_KEY);
+} else {
+  const w = document.getElementById('configWarn');
+  w.style.display = 'block';
+  w.innerHTML = '⚠️ Not connected yet. Open <b>assets/config.js</b> and paste your Supabase URL and key (see SETUP.md).';
+  document.getElementById('loginForm').style.opacity = .4;
+}
+
+/* ====================================================================== */
+/*  HELPERS                                                               */
+/* ====================================================================== */
+const $ = s => document.querySelector(s);
+const ksh = n => 'KSh ' + (Number(n)||0).toLocaleString('en-KE');
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmtDate = d => new Date(d).toLocaleDateString('en-KE',{day:'numeric',month:'short',year:'numeric'});
+const fmtDateTime = d => new Date(d).toLocaleString('en-KE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+let toastT;
+function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2600); }
+function modal(html){ $('#modalContent').innerHTML=html; $('#modalBg').classList.add('show'); }
+function closeModal(){ $('#modalBg').classList.remove('show'); }
+$('#modalBg').addEventListener('click',e=>{ if(e.target.id==='modalBg') closeModal(); });
+const STATUSES = ['new','confirmed','paid','packed','delivered','cancelled'];
+
+/* in-memory cache for analytics across tabs */
+let DATA = { orders:[], items:[], products:[], subs:[], codes:[], views:[] };
+
+/* ====================================================================== */
+/*  AUTH                                                                  */
+/* ====================================================================== */
+$('#loginForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  if(!configured){ return; }
+  const btn=$('#loginBtn'); btn.innerHTML='<span class="spin"></span>'; $('#loginMsg').textContent='';
+  const { error } = await sb.auth.signInWithPassword({ email:$('#email').value.trim(), password:$('#password').value });
+  btn.textContent='Sign in';
+  if(error){ $('#loginMsg').textContent = error.message; return; }
+  showApp();
+});
+$('#logoutBtn').addEventListener('click', async ()=>{ await sb.auth.signOut(); location.reload(); });
+
+async function init(){
+  if(!configured) return;
+  const { data } = await sb.auth.getSession();
+  if(data.session) showApp();
+}
+function showApp(){
+  $('#login').style.display='none';
+  $('#app').style.display='grid';
+  loadAll();
+}
+init();
+
+/* ====================================================================== */
+/*  NAVIGATION                                                            */
+/* ====================================================================== */
+document.querySelectorAll('.nav-item[data-tab]').forEach(n=>{
+  n.addEventListener('click',()=>{
+    document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('on'));
+    n.classList.add('on');
+    $('#sidebar').classList.remove('open');
+    render(n.dataset.tab);
+  });
+});
+$('#menuBtn').addEventListener('click',()=>$('#sidebar').classList.toggle('open'));
+
+/* ====================================================================== */
+/*  DATA LOADING                                                          */
+/* ====================================================================== */
+async function loadAll(){
+  try{
+    const [o,it,p,s,c,v] = await Promise.all([
+      sb.from('orders').select('*').order('created_at',{ascending:false}),
+      sb.from('order_items').select('*'),
+      sb.from('products').select('*').order('sort'),
+      sb.from('subscribers').select('*').order('created_at',{ascending:false}),
+      sb.from('discount_codes').select('*').order('created_at',{ascending:false}),
+      sb.from('product_views').select('*')
+    ]);
+    DATA = {
+      orders:o.data||[], items:it.data||[], products:p.data||[],
+      subs:s.data||[], codes:c.data||[], views:v.data||[]
+    };
+    updateBadges();
+    render(document.querySelector('.nav-item.on')?.dataset.tab || 'overview');
+  }catch(e){
+    $('#content').innerHTML='<div class="empty">Could not load data. Check your connection and that schema.sql was run.<br><br>'+esc(e.message||e)+'</div>';
+  }
+}
+function updateBadges(){
+  const nNew = DATA.orders.filter(o=>o.status==='new').length;
+  const nLow = DATA.products.filter(p=>p.active && p.stock<=p.low_stock_at).length;
+  const ob=$('#newOrdersBadge'), lb=$('#lowStockBadge');
+  if(nNew){ ob.style.display='grid'; ob.textContent=nNew; } else ob.style.display='none';
+  if(nLow){ lb.style.display='grid'; lb.textContent=nLow; } else lb.style.display='none';
+}
+
+function render(tab){
+  const r = { overview:renderOverview, orders:renderOrders, stock:renderStock,
+    catalogue:renderCatalogue, discounts:renderDiscounts, subscribers:renderSubscribers, analytics:renderAnalytics };
+  (r[tab]||renderOverview)();
+}
+
+/* ====================================================================== */
+/*  OVERVIEW                                                              */
+/* ====================================================================== */
+function startOfDay(d){ const x=new Date(d); x.setHours(0,0,0,0); return x; }
+function renderOverview(){
+  const now=new Date(), today=startOfDay(now);
+  const weekAgo=new Date(now-6*864e5);
+  const paidLike = o => ['paid','packed','delivered'].includes(o.status);
+  const sales = DATA.orders.filter(o=>o.status!=='cancelled');
+  const revenue = DATA.orders.filter(paidLike).reduce((s,o)=>s+o.total,0);
+  const todays = DATA.orders.filter(o=>new Date(o.created_at)>=today && o.status!=='cancelled');
+  const weekOrders = DATA.orders.filter(o=>new Date(o.created_at)>=startOfDay(weekAgo) && o.status!=='cancelled');
+  const newSubsWeek = DATA.subs.filter(s=>new Date(s.created_at)>=startOfDay(weekAgo)).length;
+  const lowStock = DATA.products.filter(p=>p.active && p.stock<=p.low_stock_at);
+
+  $('#content').innerHTML = `
+  <div class="page-head"><div><h1>Welcome back ✨</h1><p>Here's how Toria's Glam Haven is doing today.</p></div></div>
+  <div class="kpis">
+    <div class="kpi"><div class="lbl">Orders today</div><div class="val">${todays.length}</div><div class="sub">${ksh(todays.reduce((s,o)=>s+o.total,0))} value</div></div>
+    <div class="kpi"><div class="lbl">Orders this week</div><div class="val">${weekOrders.length}</div><div class="sub">${ksh(weekOrders.reduce((s,o)=>s+o.total,0))} value</div></div>
+    <div class="kpi"><div class="lbl">Revenue (confirmed paid)</div><div class="val">${ksh(revenue)}</div><div class="sub">${DATA.orders.filter(paidLike).length} paid orders</div></div>
+    <div class="kpi"><div class="lbl">New sign-ups (7d)</div><div class="val">${newSubsWeek}</div><div class="sub">${DATA.subs.length} total subscribers</div></div>
+    <div class="kpi"><div class="lbl">Needs restock</div><div class="val ${lowStock.length?'stock-low':''}">${lowStock.length}</div><div class="sub">${lowStock.length?'products low or out':'all stocked'}</div></div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <h2>Recent orders <a class="btn ghost sm" onclick="goTab('orders')">View all</a></h2>
+      ${DATA.orders.length? `<div class="tbl-wrap"><table><tbody>${
+        DATA.orders.slice(0,7).map(o=>`<tr class="row-click" onclick="orderDetail('${o.id}')">
+          <td><b>${esc(o.customer_name||'—')}</b><div class="tiny muted">${esc(o.order_no)}</div></td>
+          <td class="tiny muted">${fmtDateTime(o.created_at)}</td>
+          <td>${statusPill(o.status)}</td>
+          <td class="r"><b>${ksh(o.total)}</b></td></tr>`).join('')
+      }</tbody></table></div>` : '<div class="empty">No orders yet. They\'ll appear here the moment a customer checks out. 🛍️</div>'}
+    </div>
+    <div class="card">
+      <h2>Top sellers</h2>
+      ${topSellersHtml(5) || '<div class="empty">No sales data yet.</div>'}
+    </div>
+  </div>
+  ${lowStock.length? `<div class="card"><h2>⚠️ Restock soon</h2><div class="tbl-wrap"><table>
+    <thead><tr><th>Product</th><th>Category</th><th class="r">Stock left</th></tr></thead><tbody>
+    ${lowStock.map(p=>`<tr><td>${esc(p.name)}</td><td class="muted">${esc(p.cat)}</td><td class="r ${p.stock<=0?'stock-out':'stock-low'}"><b>${p.stock}</b></td></tr>`).join('')}
+    </tbody></table></div></div>`:''}`;
+}
+window.goTab = tab => { document.querySelector(`.nav-item[data-tab="${tab}"]`).click(); };
+
+function topSellersHtml(limit){
+  const sold = unitsByProduct();
+  const arr = Object.values(sold).sort((a,b)=>b.units-a.units).slice(0,limit);
+  if(!arr.length) return '';
+  const max = arr[0].units || 1;
+  return `<div style="display:grid;gap:13px">${arr.map(p=>`
+    <div>
+      <div style="display:flex;justify-content:space-between;font-size:.86rem;margin-bottom:5px"><span>${esc(p.name)}</span><b>${p.units} sold</b></div>
+      <div style="display:flex;align-items:center;gap:10px"><div class="bar-track"><div class="bar" style="width:${Math.round(p.units/max*100)}%"></div></div><span class="tiny muted">${ksh(p.revenue)}</span></div>
+    </div>`).join('')}</div>`;
+}
+function unitsByProduct(){
+  const map={};
+  // only count non-cancelled orders
+  const okOrders = new Set(DATA.orders.filter(o=>o.status!=='cancelled').map(o=>o.id));
+  DATA.items.forEach(it=>{
+    if(!okOrders.has(it.order_id)) return;
+    const key = it.product_id ?? ('n:'+it.name);
+    if(!map[key]) map[key]={name:it.name,units:0,revenue:0,product_id:it.product_id};
+    map[key].units += it.qty; map[key].revenue += it.line_total;
+  });
+  return map;
+}
+function statusPill(s){ return `<span class="pill st-${s}">${s}</span>`; }
+
+/* ====================================================================== */
+/*  ORDERS                                                                */
+/* ====================================================================== */
+let orderFilter='all';
+function renderOrders(){
+  const list = orderFilter==='all' ? DATA.orders : DATA.orders.filter(o=>o.status===orderFilter);
+  $('#content').innerHTML = `
+  <div class="page-head"><div><h1>Orders</h1><p>${DATA.orders.length} total · ${DATA.orders.filter(o=>o.status==='new').length} new</p></div></div>
+  <div class="card">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+      ${['all',...STATUSES].map(s=>`<button class="btn ${orderFilter===s?'':'ghost'} sm" onclick="setOrderFilter('${s}')">${s[0].toUpperCase()+s.slice(1)}${s!=='all'?` (${DATA.orders.filter(o=>o.status===s).length})`:''}</button>`).join('')}
+    </div>
+    ${list.length? `<div class="tbl-wrap"><table>
+      <thead><tr><th>Order</th><th>Customer</th><th>Delivery</th><th>Date</th><th>Status</th><th class="r">Total</th></tr></thead>
+      <tbody>${list.map(o=>`<tr class="row-click" onclick="orderDetail('${o.id}')">
+        <td><b>${esc(o.order_no)}</b>${o.is_gift?' 🎁':''}${o.discount_code?` <span class="tiny gold">${esc(o.discount_code)}</span>`:''}</td>
+        <td>${esc(o.customer_name||'—')}<div class="tiny muted">${esc(o.customer_phone||'')}</div></td>
+        <td class="tiny muted">${esc(o.delivery_type||'')}</td>
+        <td class="tiny muted">${fmtDateTime(o.created_at)}</td>
+        <td>${statusPill(o.status)}</td>
+        <td class="r"><b>${ksh(o.total)}</b></td></tr>`).join('')}
+      </tbody></table></div>`
+      : '<div class="empty">No orders in this view.</div>'}
+  </div>`;
+}
+window.setOrderFilter = s => { orderFilter=s; renderOrders(); };
+
+window.orderDetail = id => {
+  const o = DATA.orders.find(x=>x.id===id); if(!o) return;
+  const items = DATA.items.filter(i=>i.order_id===id);
+  modal(`
+    <h2>${esc(o.order_no)} ${o.is_gift?'🎁':''}</h2>
+    <div class="tiny muted" style="margin-bottom:16px">${fmtDateTime(o.created_at)}</div>
+    <div class="field-row" style="margin-bottom:14px">
+      <div><div class="tiny muted">Customer</div><b>${esc(o.customer_name||'—')}</b><div class="tiny">${esc(o.customer_phone||'')}</div></div>
+      <div><div class="tiny muted">Location</div>${esc([o.town,o.county].filter(Boolean).join(', ')||'—')}</div>
+    </div>
+    <div class="field" style="margin-bottom:14px"><div class="tiny muted">Delivery</div>${esc(o.delivery_type||'')} — ${esc(o.delivery_detail||'')}${o.delivery_fee?` · ${ksh(o.delivery_fee)}`:''}</div>
+    ${o.is_gift?`<div class="field" style="margin-bottom:14px"><div class="tiny muted">Gift</div>${esc(o.occasion||'occasion')} card${o.card_message?` · "${esc(o.card_message)}"`:''}</div>`:''}
+    <div class="tbl-wrap"><table><thead><tr><th>Item</th><th class="c">Qty</th><th class="r">Total</th></tr></thead><tbody>
+      ${items.map(i=>`<tr><td>${esc(i.name)}${i.includes?`<ul class="tiny muted" style="margin:4px 0 0 16px">${(i.includes||[]).map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}</td><td class="c">${i.qty}</td><td class="r">${ksh(i.line_total)}</td></tr>`).join('')}
+    </tbody></table></div>
+    <div style="margin-top:14px;text-align:right;font-size:.88rem">
+      <div class="muted">Subtotal: ${ksh(o.subtotal)}</div>
+      ${o.discount_amount?`<div class="gold">Discount (${esc(o.discount_code)}): -${ksh(o.discount_amount)}</div>`:''}
+      ${o.delivery_fee?`<div class="muted">Delivery: ${ksh(o.delivery_fee)}</div>`:''}
+      <div style="font-size:1.2rem;margin-top:4px"><b>Total: ${ksh(o.total)}</b></div>
+    </div>
+    <div class="field" style="margin-top:18px">
+      <label>Update status</label>
+      <select id="ordStatus">${STATUSES.map(s=>`<option ${o.status===s?'selected':''}>${s}</option>`).join('')}</select>
+    </div>
+    <div class="field"><label>Internal notes</label><textarea id="ordNotes" rows="2" placeholder="e.g. M-Pesa confirmed, code XYZ123">${esc(o.notes||'')}</textarea></div>
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="closeModal()">Close</button>
+      <a class="btn ghost" href="https://wa.me/${(o.customer_phone||'').replace(/[^0-9]/g,'').replace(/^0/,'254')}" target="_blank">💬 WhatsApp</a>
+      <button class="btn" onclick="saveOrder('${o.id}')">Save</button>
+    </div>`);
+};
+window.saveOrder = async id => {
+  const status=$('#ordStatus').value, notes=$('#ordNotes').value;
+  const { error } = await sb.from('orders').update({status,notes}).eq('id',id);
+  if(error){ toast('Error: '+error.message); return; }
+  const o=DATA.orders.find(x=>x.id===id); o.status=status; o.notes=notes;
+  closeModal(); updateBadges(); render('orders'); toast('Order updated ✓');
+};
+
+/* ====================================================================== */
+/*  STOCK                                                                 */
+/* ====================================================================== */
+function renderStock(){
+  const p = DATA.products;
+  $('#content').innerHTML = `
+  <div class="page-head"><div><h1>Stock</h1><p>Tap a number to edit. Out-of-stock items show "Sold out" on the shop.</p></div></div>
+  <div class="card"><div class="tbl-wrap"><table>
+    <thead><tr><th>Product</th><th>Category</th><th class="r">Price</th><th class="c">Stock</th><th class="c">Visible</th></tr></thead>
+    <tbody>${p.map(pr=>{
+      const cls = pr.stock<=0?'stock-out':(pr.stock<=pr.low_stock_at?'stock-low':'stock-ok');
+      return `<tr>
+        <td><b>${esc(pr.name)}</b>${pr.tag?` <span class="tiny gold">${esc(pr.tag)}</span>`:''}</td>
+        <td class="muted">${esc(pr.cat)}</td>
+        <td class="r" style="width:120px"><input type="number" value="${pr.price}" style="text-align:right;padding:5px 7px" onchange="updProduct(${pr.id},'price',this.value)"></td>
+        <td class="c" style="width:100px"><input type="number" value="${pr.stock}" class="${cls}" style="text-align:center;padding:5px 7px;font-weight:700" onchange="updProduct(${pr.id},'stock',this.value)"></td>
+        <td class="c"><input type="checkbox" ${pr.active?'checked':''} style="width:auto;transform:scale(1.3)" onchange="updProduct(${pr.id},'active',this.checked)"></td>
+      </tr>`;}).join('')}
+    </tbody></table></div></div>`;
+}
+window.updProduct = async (id, field, value)=>{
+  if(field==='price'||field==='stock') value = parseInt(value)||0;
+  const { error } = await sb.from('products').update({[field]:value}).eq('id',id);
+  if(error){ toast('Error: '+error.message); return; }
+  const pr=DATA.products.find(x=>x.id===id); pr[field]=value;
+  updateBadges(); toast('Saved ✓');
+};
+
+/* ====================================================================== */
+/*  CATALOGUE                                                             */
+/* ====================================================================== */
+function renderCatalogue(){
+  $('#content').innerHTML = `
+  <div class="page-head"><div><h1>Catalogue</h1><p>Add new products with photos. All ${DATA.products.length} pieces are managed here.</p></div>
+    <button class="btn" onclick="productForm()">+ New product</button></div>
+  <div class="card"><div class="tbl-wrap" id="catTbl"><table>
+    <thead><tr><th>Product</th><th>Category</th><th class="r">Price</th><th class="r">Was</th><th>Tag</th><th class="c">Stock</th><th></th></tr></thead>
+    <tbody>${DATA.products.map(p=>`<tr>
+      <td><b>${esc(p.name)}</b>${!p.active?' <span class="pill st-cancelled">hidden</span>':''}</td>
+      <td class="muted">${esc(p.cat)}</td>
+      <td class="r">${ksh(p.price)}</td>
+      <td class="r muted">${p.was?ksh(p.was):'—'}</td>
+      <td>${p.tag?`<span class="gold tiny">${esc(p.tag)}</span>`:'—'}</td>
+      <td class="c">${p.stock}</td>
+      <td class="r"><button class="btn ghost sm" onclick="productForm(${p.id})">Edit</button></td>
+    </tr>`).join('')}</tbody></table></div></div>`;
+}
+window.productForm = (id)=>{
+  const p = id? DATA.products.find(x=>x.id===id) : {cat:'earrings',price:'',stock:10,active:true,low_stock_at:3};
+  const isNew = !id;
+  modal(`
+    <h2>${isNew?'New product':'Edit '+esc(p.name)}</h2>
+    <div class="field"><label>Name</label><input id="pf_name" value="${esc(p.name||'')}"></div>
+    <div class="field-row">
+      <div class="field"><label>Category</label><select id="pf_cat">${['earrings','necklaces','sets','giftsets'].map(c=>`<option ${p.cat===c?'selected':''}>${c}</option>`).join('')}</select></div>
+      <div class="field"><label>Tag (optional)</label><input id="pf_tag" value="${esc(p.tag||'')}" placeholder="New, Best Seller…"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Price (KSh)</label><input id="pf_price" type="number" value="${p.price}"></div>
+      <div class="field"><label>Was / compare-at (optional)</label><input id="pf_was" type="number" value="${p.was||''}"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Stock</label><input id="pf_stock" type="number" value="${p.stock}"></div>
+      <div class="field"><label>Low-stock alert at</label><input id="pf_low" type="number" value="${p.low_stock_at??3}"></div>
+    </div>
+    <div class="field"><label>Description</label><textarea id="pf_desc" rows="2">${esc(p.description||'')}</textarea></div>
+    <div class="field"><label>Styling tip (optional)</label><textarea id="pf_tip" rows="2">${esc(p.tip||'')}</textarea></div>
+    <div class="field"><label>Gift box contents (optional, one per line)</label><textarea id="pf_inc" rows="2" placeholder="A necklace&#10;A pair of earrings">${(p.includes||[]).join('\n')}</textarea></div>
+    <div class="field"><label>Photo</label>
+      ${p.image_url?`<img src="${esc(p.image_url)}" style="width:70px;height:70px;object-fit:cover;border-radius:8px;margin-bottom:8px">`:''}
+      <input id="pf_img" type="file" accept="image/*" style="padding:7px">
+      <div class="tiny muted" id="pf_imgnote" style="margin-top:5px">${id&&!p.image_url?'This original product uses its built-in photo. Upload to replace.':''}</div>
+    </div>
+    <div class="modal-actions">
+      ${!isNew?`<button class="btn danger" onclick="delProduct(${id})">Delete</button>`:''}
+      <button class="btn ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn" id="pf_save" onclick="saveProduct(${id||'null'})">Save</button>
+    </div>`);
+};
+window.saveProduct = async (id)=>{
+  const btn=$('#pf_save'); btn.innerHTML='<span class="spin"></span>';
+  try{
+    const incRaw=$('#pf_inc').value.trim();
+    const rec = {
+      name:$('#pf_name').value.trim(), cat:$('#pf_cat').value,
+      tag:$('#pf_tag').value.trim()||null,
+      price:parseInt($('#pf_price').value)||0,
+      was:parseInt($('#pf_was').value)||null,
+      stock:parseInt($('#pf_stock').value)||0,
+      low_stock_at:parseInt($('#pf_low').value)||3,
+      description:$('#pf_desc').value.trim()||null,
+      tip:$('#pf_tip').value.trim()||null,
+      includes: incRaw? incRaw.split('\n').map(s=>s.trim()).filter(Boolean) : null
+    };
+    if(!rec.name){ toast('Name is required'); btn.textContent='Save'; return; }
+
+    // upload image if chosen
+    const file=$('#pf_img').files[0];
+    if(file){
+      const path = Date.now()+'_'+file.name.replace(/[^a-zA-Z0-9.]/g,'_');
+      const { error:upErr } = await sb.storage.from('catalogue').upload(path,file,{upsert:true});
+      if(upErr) throw upErr;
+      rec.image_url = sb.storage.from('catalogue').getPublicUrl(path).data.publicUrl;
+    }
+
+    if(id){
+      const { error } = await sb.from('products').update(rec).eq('id',id);
+      if(error) throw error;
+    }else{
+      // new id: above the original range to avoid clashes
+      const maxId = Math.max(1000, ...DATA.products.map(p=>p.id));
+      rec.id = maxId+1; rec.sort = 5;
+      const { error } = await sb.from('products').insert(rec);
+      if(error) throw error;
+    }
+    closeModal(); await loadAll(); render('catalogue'); toast('Product saved ✓');
+  }catch(e){ toast('Error: '+(e.message||e)); btn.textContent='Save'; }
+};
+window.delProduct = async (id)=>{
+  if(!confirm('Delete this product? This cannot be undone.')) return;
+  const { error } = await sb.from('products').delete().eq('id',id);
+  if(error){ toast('Error: '+error.message); return; }
+  closeModal(); await loadAll(); render('catalogue'); toast('Product deleted');
+};
+
+/* ====================================================================== */
+/*  DISCOUNTS                                                             */
+/* ====================================================================== */
+function renderDiscounts(){
+  $('#content').innerHTML = `
+  <div class="page-head"><div><h1>Discount codes</h1><p>Create codes and watch how often each is used.</p></div>
+    <button class="btn" onclick="codeForm()">+ New code</button></div>
+  <div class="card"><div class="tbl-wrap"><table>
+    <thead><tr><th>Code</th><th>Reward</th><th class="c">Used</th><th class="c">Limit</th><th>Expires</th><th class="c">Active</th><th></th></tr></thead>
+    <tbody>${DATA.codes.length? DATA.codes.map(c=>`<tr>
+      <td><b class="gold">${esc(c.code)}</b></td>
+      <td>${c.type==='pct'?c.value+'% off':ksh(c.value)+' off'}</td>
+      <td class="c"><b>${c.used_count}</b></td>
+      <td class="c muted">${c.max_uses??'∞'}</td>
+      <td class="muted tiny">${c.expires_at?fmtDate(c.expires_at):'never'}</td>
+      <td class="c"><input type="checkbox" ${c.active?'checked':''} style="width:auto;transform:scale(1.3)" onchange="toggleCode('${c.id}',this.checked)"></td>
+      <td class="r"><button class="btn danger sm" onclick="delCode('${c.id}')">Delete</button></td>
+    </tr>`).join('') : '<tr><td colspan="7"><div class="empty">No codes yet. Create one to start a promotion.</div></td></tr>'}
+    </tbody></table></div></div>`;
+}
+window.codeForm = ()=>{
+  modal(`
+    <h2>New discount code</h2>
+    <div class="field"><label>Code (what customers type)</label><input id="cf_code" placeholder="e.g. MUM2026" style="text-transform:uppercase"></div>
+    <div class="field-row">
+      <div class="field"><label>Type</label><select id="cf_type"><option value="pct">Percent off (%)</option><option value="flat">Flat KSh off</option></select></div>
+      <div class="field"><label>Value</label><input id="cf_val" type="number" placeholder="10"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Max uses (blank = unlimited)</label><input id="cf_max" type="number" placeholder="∞"></div>
+      <div class="field"><label>Expires (blank = never)</label><input id="cf_exp" type="date"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn" id="cf_save" onclick="saveCode()">Create code</button>
+    </div>`);
+};
+window.saveCode = async ()=>{
+  const code=$('#cf_code').value.trim().toUpperCase();
+  const value=parseInt($('#cf_val').value)||0;
+  if(!code||!value){ toast('Enter a code and a value'); return; }
+  const rec={ code, type:$('#cf_type').value, value,
+    max_uses: $('#cf_max').value? parseInt($('#cf_max').value):null,
+    expires_at: $('#cf_exp').value? new Date($('#cf_exp').value).toISOString():null };
+  const { error } = await sb.from('discount_codes').insert(rec);
+  if(error){ toast(error.message.includes('duplicate')?'That code already exists':'Error: '+error.message); return; }
+  closeModal(); await loadAll(); render('discounts'); toast('Code created ✓');
+};
+window.toggleCode = async (id,active)=>{
+  await sb.from('discount_codes').update({active}).eq('id',id);
+  const c=DATA.codes.find(x=>x.id===id); c.active=active; toast('Updated ✓');
+};
+window.delCode = async (id)=>{
+  if(!confirm('Delete this code?')) return;
+  await sb.from('discount_codes').delete().eq('id',id);
+  await loadAll(); render('discounts'); toast('Code deleted');
+};
+
+/* ====================================================================== */
+/*  SUBSCRIBERS                                                           */
+/* ====================================================================== */
+function renderSubscribers(){
+  $('#content').innerHTML = `
+  <div class="page-head"><div><h1>Subscribers</h1><p>${DATA.subs.length} people on your Glam Circle list.</p></div>
+    <button class="btn ghost" onclick="exportSubs()">⬇ Export CSV</button></div>
+  <div class="card">${DATA.subs.length? `<div class="tbl-wrap"><table>
+    <thead><tr><th>Email</th><th>Source</th><th class="r">Joined</th></tr></thead>
+    <tbody>${DATA.subs.map(s=>`<tr><td><b>${esc(s.email)}</b></td><td class="muted">${esc(s.source||'')}</td><td class="r muted tiny">${fmtDateTime(s.created_at)}</td></tr>`).join('')}</tbody>
+    </table></div>`:'<div class="empty">No sign-ups yet. When someone enters their email for 10% off, they\'ll appear here.</div>'}</div>`;
+}
+window.exportSubs = ()=>{
+  const rows=[['email','source','joined'],...DATA.subs.map(s=>[s.email,s.source||'',s.created_at])];
+  const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='glam-circle-subscribers.csv'; a.click();
+};
+
+/* ====================================================================== */
+/*  ANALYTICS                                                             */
+/* ====================================================================== */
+function renderAnalytics(){
+  const sold = unitsByProduct();
+  const soldArr = Object.values(sold).sort((a,b)=>b.units-a.units);
+  // products with zero sales
+  const soldIds = new Set(Object.values(sold).map(s=>s.product_id).filter(Boolean));
+  const notMoving = DATA.products.filter(p=>p.active && !soldIds.has(p.id));
+  // views per product
+  const viewCount={}; DATA.views.forEach(v=>viewCount[v.product_id]=(viewCount[v.product_id]||0)+1);
+  // revenue by category
+  const catRev={}; Object.values(sold).forEach(s=>{ const pr=DATA.products.find(p=>p.id===s.product_id); const cat=pr?pr.cat:'other'; catRev[cat]=(catRev[cat]||0)+s.revenue; });
+  // revenue last 14 days
+  const days=[]; const today=startOfDay(new Date());
+  for(let i=13;i>=0;i--){ const d=new Date(today-i*864e5); days.push({d,rev:0,n:0}); }
+  DATA.orders.filter(o=>o.status!=='cancelled').forEach(o=>{
+    const od=startOfDay(o.created_at).getTime();
+    const slot=days.find(x=>x.d.getTime()===od); if(slot){ slot.rev+=o.total; slot.n++; }
+  });
+  const maxRev=Math.max(1,...days.map(d=>d.rev));
+  const totalCat=Object.values(catRev).reduce((a,b)=>a+b,0)||1;
+
+  $('#content').innerHTML = `
+  <div class="page-head"><div><h1>Analytics</h1><p>What's moving, what isn't, and where the money comes from.</p></div></div>
+
+  <div class="card">
+    <h2>Revenue — last 14 days</h2>
+    <div style="display:flex;align-items:flex-end;gap:6px;height:160px;margin-top:10px">
+      ${days.map(d=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end">
+        <div style="width:100%;background:var(--grad);border-radius:4px 4px 0 0;height:${Math.round(d.rev/maxRev*100)}%;min-height:${d.rev?'3px':'0'}" title="${ksh(d.rev)}"></div>
+        <div class="tiny muted" style="font-size:.62rem">${d.d.getDate()}</div>
+      </div>`).join('')}
+    </div>
+    <div class="tiny muted" style="text-align:center;margin-top:8px">Peak day: ${ksh(maxRev)}</div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h2>🔥 Best movers</h2>
+      ${soldArr.length? `<div class="tbl-wrap"><table><thead><tr><th>Product</th><th class="c">Sold</th><th class="r">Revenue</th></tr></thead>
+      <tbody>${soldArr.slice(0,10).map(s=>`<tr><td>${esc(s.name)}</td><td class="c"><b>${s.units}</b></td><td class="r">${ksh(s.revenue)}</td></tr>`).join('')}</tbody></table></div>`
+      :'<div class="empty">No sales yet.</div>'}
+    </div>
+    <div class="card">
+      <h2>🧊 Not moving</h2>
+      <p class="tiny muted" style="margin-top:-8px;margin-bottom:12px">Active products with zero sales — consider a promo or better photos.</p>
+      ${notMoving.length? `<div class="tbl-wrap"><table><thead><tr><th>Product</th><th class="c">Views</th><th class="r">Price</th></tr></thead>
+      <tbody>${notMoving.map(p=>`<tr><td>${esc(p.name)}</td><td class="c muted">${viewCount[p.id]||0}</td><td class="r">${ksh(p.price)}</td></tr>`).join('')}</tbody></table></div>`
+      :'<div class="empty">Everything is selling 🎉</div>'}
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h2>Revenue by category</h2>
+      ${Object.keys(catRev).length? `<div style="display:grid;gap:13px">${Object.entries(catRev).sort((a,b)=>b[1]-a[1]).map(([cat,rev])=>`
+        <div><div style="display:flex;justify-content:space-between;font-size:.86rem;margin-bottom:5px"><span style="text-transform:capitalize">${esc(cat)}</span><b>${ksh(rev)}</b></div>
+        <div class="bar-track"><div class="bar" style="width:${Math.round(rev/totalCat*100)}%"></div></div></div>`).join('')}</div>`
+      :'<div class="empty">No sales yet.</div>'}
+    </div>
+    <div class="card">
+      <h2>At a glance</h2>
+      <div class="kpis" style="margin:0">
+        <div class="kpi"><div class="lbl">Avg order value</div><div class="val">${ksh(avgOrder())}</div></div>
+        <div class="kpi"><div class="lbl">Total units sold</div><div class="val">${soldArr.reduce((s,x)=>s+x.units,0)}</div></div>
+        <div class="kpi"><div class="lbl">Gift orders</div><div class="val">${DATA.orders.filter(o=>o.is_gift&&o.status!=='cancelled').length}</div></div>
+        <div class="kpi"><div class="lbl">Codes redeemed</div><div class="val">${DATA.orders.filter(o=>o.discount_code&&o.status!=='cancelled').length}</div></div>
+      </div>
+    </div>
+  </div>`;
+}
+function avgOrder(){
+  const ok=DATA.orders.filter(o=>o.status!=='cancelled');
+  return ok.length? Math.round(ok.reduce((s,o)=>s+o.total,0)/ok.length):0;
+}
+</script>
+</body>
+</html>

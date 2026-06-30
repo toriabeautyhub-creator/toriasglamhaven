@@ -29,6 +29,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Outfit:wght@300;400;500;600&family=Pinyon+Script&family=Yeseva+One&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="assets/config.js"></script>
 
 <style>
 :root{
@@ -827,6 +830,124 @@ const PAYBILL='400200', ACCOUNT='1075861';
 const ksh = n => 'KSh ' + n.toLocaleString('en-KE');
 const imgSrc = k => (k && IMG[k]) ? IMG[k] : null;
 
+/* ====================================================================== */
+/*  BACKEND BRIDGE — connects the shop to Supabase + EmailJS.             */
+/*  If config.js isn't filled in yet, the shop still works perfectly      */
+/*  (it just won't save orders/sign-ups). Nothing here can break the UI.  */
+/* ====================================================================== */
+const TGH = window.TGH_CONFIG || {};
+let sbClient = null, emailReady = false;
+(function initBackend(){
+  try{
+    if(TGH.SUPABASE_URL && !TGH.SUPABASE_URL.includes('PASTE') && window.supabase){
+      sbClient = window.supabase.createClient(TGH.SUPABASE_URL, TGH.SUPABASE_ANON_KEY);
+    }
+  }catch(e){ console.warn('Supabase init skipped', e); }
+  try{
+    if(TGH.EMAILJS_PUBLIC_KEY && window.emailjs){
+      window.emailjs.init({ publicKey: TGH.EMAILJS_PUBLIC_KEY });
+      emailReady = true;
+    }
+  }catch(e){ console.warn('EmailJS init skipped', e); }
+})();
+
+/* Pull live prices, tags, stock and any new products from the dashboard. */
+async function syncCatalogue(){
+  if(!sbClient) return;
+  try{
+    const { data, error } = await sbClient.from('products').select('*');
+    if(error || !data) return;
+    const byId = {}; data.forEach(d=>byId[d.id]=d);
+    PRODUCTS.forEach(p=>{
+      const d = byId[p.id];
+      if(d){
+        p.price = d.price;
+        p.was = d.was || undefined;
+        p.tag = d.tag || undefined;
+        p.stock = d.stock;
+        p._active = d.active;
+        // dashboard edits to photo / text override the built-in version
+        if(d.image_url) p.image_url = d.image_url;
+        if(d.description) p.desc = d.description;
+        if(d.tip) p.tip = d.tip;
+        delete byId[p.id];
+      }
+    });
+    // append products created in the dashboard (not in the built-in list)
+    Object.values(byId).forEach(d=>{
+      PRODUCTS.push({
+        id:d.id, cat:d.cat, name:d.name, price:d.price, was:d.was||undefined,
+        tag:d.tag||undefined, desc:d.description||'', tip:d.tip||'',
+        includes:d.includes||undefined, image_url:d.image_url||null,
+        stock:d.stock, _active:d.active
+      });
+    });
+    // hide anything switched off in the dashboard
+    for(let i=PRODUCTS.length-1;i>=0;i--){ if(PRODUCTS[i]._active===false) PRODUCTS.splice(i,1); }
+    // refresh whatever the customer is currently looking at
+    renderHeroGrid(); renderCats(); renderFeatured(); renderSale(); renderShop(currentShopCat);
+  }catch(e){ console.warn('Catalogue sync skipped', e); }
+}
+
+/* Validate a discount code against the database (falls back to built-in codes). */
+async function validateCode(code){
+  if(sbClient){
+    try{
+      const { data } = await sbClient.rpc('validate_discount',{ p_code: code });
+      if(data && data.length){ return { code:data[0].code, type:data[0].type, val:data[0].value }; }
+      return null;
+    }catch(e){ /* fall through to local */ }
+  }
+  return CODES[code] ? { code, ...CODES[code] } : null;
+}
+
+/* Build the order object that gets saved + emailed. */
+function buildOrderPayload(){
+  const val = id => (document.getElementById(id)?.value || '').trim();
+  const d=DELIVERY[delivery], disc=discountAmount(), sub=subtotal(), total=sub-disc+d.fee;
+  return {
+    order_no: invNo || genInv(),
+    customer_name: val('f_name'), customer_phone: val('f_phone'),
+    town: val('f_town'), county: val('f_county'),
+    delivery_type: delivery, delivery_detail: deliveryDetail(), delivery_fee: d.fee,
+    is_gift: isGift, occasion: occasion||null, card_message: val('f_cardmsg'),
+    subtotal: sub, discount_code: discount?discount.code:null, discount_amount: disc, total,
+    items: cart.map(c=>({ product_id:c.id, name:c.name, price:c.price, qty:c.qty, includes:c.includes||null }))
+  };
+}
+
+/* Save the order to the dashboard and email the business. Never blocks checkout. */
+async function saveOrderToBackend(){
+  const p = buildOrderPayload();
+  if(sbClient){
+    try{ await sbClient.rpc('place_order',{ payload:p }); }
+    catch(e){ console.warn('Order not saved to backend', e); }
+  }
+  if(emailReady && TGH.EMAILJS_ORDER_TEMPLATE_ID){
+    const itemsTxt = p.items.map(i=>`• ${i.name} x${i.qty} - KSh ${(i.price*i.qty).toLocaleString('en-KE')}`).join('\n');
+    window.emailjs.send(TGH.EMAILJS_SERVICE_ID, TGH.EMAILJS_ORDER_TEMPLATE_ID, {
+      to_email: TGH.NOTIFY_EMAIL, order_no:p.order_no, customer_name:p.customer_name||'-',
+      customer_phone:p.customer_phone||'-', delivery:p.delivery_detail||'-', items:itemsTxt,
+      discount: p.discount_code?`${p.discount_code} (-KSh ${p.discount_amount.toLocaleString('en-KE')})`:'none',
+      gift: p.is_gift?('Yes - '+(p.occasion||'occasion')):'No',
+      total:'KSh '+p.total.toLocaleString('en-KE')
+    }).catch(e=>console.warn('Order email failed', e));
+  }
+}
+
+/* Save a newsletter sign-up and notify the business. */
+async function saveSubscriber(email){
+  if(sbClient){
+    try{ await sbClient.rpc('subscribe',{ p_email:email, p_source:'newsletter' }); }
+    catch(e){ console.warn('Sign-up not saved', e); }
+  }
+  if(emailReady && TGH.EMAILJS_SIGNUP_TEMPLATE_ID){
+    window.emailjs.send(TGH.EMAILJS_SERVICE_ID, TGH.EMAILJS_SIGNUP_TEMPLATE_ID, {
+      to_email: TGH.NOTIFY_EMAIL, subscriber_email: email
+    }).catch(e=>console.warn('Sign-up email failed', e));
+  }
+}
+
 function go(v){
   document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
   document.getElementById('view-'+v).classList.add('active');
@@ -842,27 +963,30 @@ function closeMenuM(){ if(window.innerWidth<=880) document.getElementById('menu'
 
 function listFor(cat){ if(cat==='all')return PRODUCTS; if(cat==='sale')return PRODUCTS.filter(p=>p.was&&p.was>p.price); return PRODUCTS.filter(p=>p.cat===cat); }
 function shop(cat){ go('shop'); renderShop(cat); }
+let currentShopCat='all';
 function renderShop(cat){
+  currentShopCat=cat;
   document.getElementById('shopTitle').textContent = LABELS[cat]||'All Jewelry';
   document.getElementById('shopBar').innerHTML = Object.keys(LABELS).map(k=>`<button class="chip ${k===cat?'active':''}" onclick="renderShop('${k}')">${LABELS[k]}</button>`).join('');
   document.getElementById('shopGrid').innerHTML = listFor(cat).map(cardHTML).join('');
 }
 function imgKeysOf(p){ return (p.imgs&&p.imgs.length)?p.imgs : (p.img?[p.img]:[]); }
-function firstImg(p){ const k=imgKeysOf(p); return k.length?imgSrc(k[0]):null; }
+function firstImg(p){ if(p.image_url) return p.image_url; const k=imgKeysOf(p); return k.length?imgSrc(k[0]):null; }
 function giftCover(p){
   return `<div class="gift-cover"><div class="gc-eyebrow">Custom Gift Box</div><div class="gc-name">${p.name}</div><div class="gc-rule"></div><div class="gc-tag">You choose what goes inside</div></div>`;
 }
 function imgTile(p){ if(p.includes) return giftCover(p); const s=firstImg(p); return s?`<img src="${s}" alt="${p.name}">`:`<div class="ph">[ Add photo ]<br>${p.name}</div>`; }
 function cardHTML(p){
   const onSale=p.was&&p.was>p.price;
-  const pill=onSale?`<span class="tagpill sale">Sale</span>`:(p.tag?`<span class="tagpill">${p.tag}</span>`:'');
+  const out = p.stock!=null && p.stock<=0;
+  const pill=out?`<span class="tagpill sale">Sold out</span>`:(onSale?`<span class="tagpill sale">Sale</span>`:(p.tag?`<span class="tagpill">${p.tag}</span>`:''));
   return `<div class="card">
     <div class="img" onclick="quickView(${p.id})">${pill}${imgTile(p)}</div>
     <div class="body">
       <div class="cat-mini">${LABELS[p.cat]}</div>
       <h3>${p.name}</h3>
       <div class="price">${ksh(p.price)}${onSale?`<span class="was">${ksh(p.was)}</span>`:''}</div>
-      <button class="add" onclick="addToCart(${p.id})">Add to Bag</button>
+      <button class="add"${out?' disabled style="opacity:.45;cursor:not-allowed"':` onclick="addToCart(${p.id})"`}>${out?'Sold out':'Add to Bag'}</button>
     </div></div>`;
 }
 function renderFeatured(){ document.getElementById('featuredGrid').innerHTML = PRODUCTS.filter(p=>p.tag==='Best Seller').slice(0,4).map(cardHTML).join(''); }
@@ -884,7 +1008,8 @@ function renderCats(){
 
 function quickView(id){
   const p=PRODUCTS.find(x=>x.id===id); const onSale=p.was&&p.was>p.price;
-  const imgs=imgKeysOf(p).map(imgSrc).filter(Boolean);
+  if(sbClient){ try{ sbClient.rpc('track_view',{ p_id:id }); }catch(e){} }
+  const imgs = p.image_url ? [p.image_url] : imgKeysOf(p).map(imgSrc).filter(Boolean);
   let media;
   if(p.includes){
     media=giftCover(p);
@@ -938,7 +1063,7 @@ function pvGo(i){ const sl=document.getElementById('pvSlider'); if(sl){ sl.scrol
 function pvStep(d){ const sl=document.getElementById('pvSlider'); if(!sl) return; const n=sl.children.length; let i=Math.round(sl.scrollLeft/sl.clientWidth)+d; i=Math.max(0,Math.min(n-1,i)); sl.scrollTo({left:sl.clientWidth*i,behavior:'smooth'}); pvAutoStart(sl); }
 function closeModal(){ clearInterval(pvTimer); document.getElementById('modal').classList.remove('show'); }
 
-function addToCart(id){ const ex=cart.find(c=>c.id===id); if(ex)ex.qty++; else{const p=PRODUCTS.find(x=>x.id===id);cart.push({...p,qty:1});} updateCount(); toast('Added to your bag'); }
+function addToCart(id){ const p=PRODUCTS.find(x=>x.id===id); if(p&&p.stock!=null&&p.stock<=0){ toast('Sorry, that piece is sold out'); return; } const ex=cart.find(c=>c.id===id); if(ex)ex.qty++; else cart.push({...p,qty:1}); updateCount(); toast('Added to your bag'); }
 function updateCount(){ document.getElementById('cartCount').textContent = cart.reduce((s,c)=>s+c.qty,0); }
 function changeQty(id,d){ const c=cart.find(x=>x.id===id); c.qty+=d; if(c.qty<=0)cart=cart.filter(x=>x.id!==id); updateCount(); renderCart(); }
 function removeItem(id){ cart=cart.filter(x=>x.id!==id); updateCount(); renderCart(); }
@@ -946,10 +1071,11 @@ function subtotal(){ return cart.reduce((s,c)=>s+c.price*c.qty,0); }
 function discountAmount(){ if(!discount)return 0; const sub=subtotal();
   return discount.type==='pct'?Math.round(sub*discount.val/100):Math.min(discount.val,sub); }
 
-function applyCode(){
+async function applyCode(){
   const el=document.getElementById('codeInput'); const code=(el.value||'').trim().toUpperCase();
   if(!code){discount=null;renderCart();return;}
-  if(CODES[code]){ discount={code,...CODES[code]}; toast('Code '+code+' applied'); }
+  const res = await validateCode(code);
+  if(res){ discount=res; toast('Code '+code+' applied'); }
   else { discount=null; toast('That code is not valid'); }
   renderCart();
 }
@@ -1057,6 +1183,7 @@ function buildInvoice(){
 function stkPush(){ const ph=document.getElementById('stkPhone').value.trim(); if(!ph){toast('Enter your M-Pesa number');return;} toast('Sending payment prompt to '+ph+' ...'); setTimeout(orderDone,1600); }
 function confirmManual(){ orderDone(); }
 function orderDone(){
+  saveOrderToBackend();
   ['step1','step2','step3','step4'].forEach(s=>document.getElementById(s).style.display='none');
   document.getElementById('stepDone').style.display='block';
   document.getElementById('doneInv').textContent=invNo;
@@ -1150,6 +1277,7 @@ function subscribeNewsletter(){
   const input=document.getElementById('newsEmail');
   const email=(input.value||'').trim();
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ toast('Please enter a valid email'); input.focus(); return; }
+  saveSubscriber(email);
   document.getElementById('newsRow').style.display='none';
   const done=document.getElementById('newsDone');
   done.style.display='block';
@@ -1164,6 +1292,7 @@ let LOGO_PNG=null;
 (function(){ try{ const im=new Image(); im.onload=function(){ try{ const cv=document.createElement('canvas'); cv.width=cv.height=240; cv.getContext('2d').drawImage(im,0,0,240,240); LOGO_PNG=cv.toDataURL('image/png'); }catch(e){} }; im.src=LOGO_IMG; }catch(e){} })();
 document.getElementById('storyImg').src=imgSrc('trayAngled');
 renderHeroGrid(); renderCats(); renderFeatured(); renderSale(); renderShop('all'); updateCount();
+syncCatalogue();  /* pull live prices, stock & new products from the dashboard */
 </script>
 </body>
 </html>
