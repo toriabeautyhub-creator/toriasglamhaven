@@ -147,6 +147,7 @@ tr:last-child td{border-bottom:none}
     <a class="nav-item" data-tab="stock"><span class="ico">📦</span> Stock <span class="badge" id="lowStockBadge" style="display:none">0</span></a>
     <a class="nav-item" data-tab="catalogue"><span class="ico">🖼️</span> Catalogue</a>
     <a class="nav-item" data-tab="discounts"><span class="ico">🏷️</span> Discounts</a>
+    <a class="nav-item" data-tab="expenses"><span class="ico">🧾</span> Expenses</a>
     <a class="nav-item" data-tab="subscribers"><span class="ico">📧</span> Subscribers</a>
     <a class="nav-item" data-tab="analytics"><span class="ico">📈</span> Analytics</a>
     <div class="nav-spacer"></div>
@@ -197,7 +198,7 @@ $('#modalBg').addEventListener('click',e=>{ if(e.target.id==='modalBg') closeMod
 const STATUSES = ['new','confirmed','paid','packed','delivered','cancelled'];
 
 /* in-memory cache for analytics across tabs */
-let DATA = { orders:[], items:[], products:[], subs:[], codes:[], views:[] };
+let DATA = { orders:[], items:[], products:[], subs:[], codes:[], views:[], expenses:[] };
 
 /* ====================================================================== */
 /*  AUTH                                                                  */
@@ -243,17 +244,18 @@ $('#menuBtn').addEventListener('click',()=>$('#sidebar').classList.toggle('open'
 /* ====================================================================== */
 async function loadAll(){
   try{
-    const [o,it,p,s,c,v] = await Promise.all([
+    const [o,it,p,s,c,v,ex] = await Promise.all([
       sb.from('orders').select('*').order('created_at',{ascending:false}),
       sb.from('order_items').select('*'),
       sb.from('products').select('*').order('sort'),
       sb.from('subscribers').select('*').order('created_at',{ascending:false}),
       sb.from('discount_codes').select('*').order('created_at',{ascending:false}),
-      sb.from('product_views').select('*')
+      sb.from('product_views').select('*'),
+      sb.from('expenses').select('*').order('spent_on',{ascending:false})
     ]);
     DATA = {
       orders:o.data||[], items:it.data||[], products:p.data||[],
-      subs:s.data||[], codes:c.data||[], views:v.data||[]
+      subs:s.data||[], codes:c.data||[], views:v.data||[], expenses:ex.data||[]
     };
     updateBadges();
     render(document.querySelector('.nav-item.on')?.dataset.tab || 'overview');
@@ -274,7 +276,7 @@ function updateBadges(){
 
 function render(tab){
   const r = { overview:renderOverview, orders:renderOrders, fulfilment:renderFulfilment, stock:renderStock,
-    catalogue:renderCatalogue, discounts:renderDiscounts, subscribers:renderSubscribers, analytics:renderAnalytics };
+    catalogue:renderCatalogue, discounts:renderDiscounts, expenses:renderExpenses, subscribers:renderSubscribers, analytics:renderAnalytics };
   (r[tab]||renderOverview)();
 }
 
@@ -549,7 +551,18 @@ window.productForm = (id)=>{
       <div class="field"><label>Price (KSh)</label><input id="pf_price" type="number" value="${p.price}"></div>
       <div class="field"><label>Was / compare-at (optional)</label><input id="pf_was" type="number" value="${p.was||''}"></div>
     </div>
-    <div class="field"><label>Cost price (KSh) — private, for profit reports</label><input id="pf_cost" type="number" value="${p.cost||0}"></div>
+    <div style="background:rgba(201,162,75,.06);border:1px solid var(--line-2);border-radius:8px;padding:13px 14px;margin-bottom:13px">
+      <div class="tiny gold" style="margin-bottom:9px;letter-spacing:.04em">🔒 PRIVATE COST (never shown on the shop)</div>
+      <div class="field-row">
+        <div class="field" style="margin-bottom:9px"><label>Buying price</label><input id="pf_buy" type="number" value="${p.buy_price||0}" oninput="pfCostTotal()"></div>
+        <div class="field" style="margin-bottom:9px"><label>Shipping / item</label><input id="pf_ship" type="number" value="${p.ship_cost||0}" oninput="pfCostTotal()"></div>
+      </div>
+      <div class="field-row">
+        <div class="field" style="margin-bottom:0"><label>Packaging / item</label><input id="pf_pack" type="number" value="${p.pack_cost||0}" oninput="pfCostTotal()"></div>
+        <div class="field" style="margin-bottom:0"><label>Total cost / item</label><input id="pf_cost" type="number" value="${p.cost||0}" readonly style="font-weight:700;color:var(--gold-2)"></div>
+      </div>
+      <div class="tiny muted" style="margin-top:8px">Tip: track packaging here for exact per-item profit, OR leave it 0 and log packaging restocks in the Expenses tab — don't do both.</div>
+    </div>
     <div class="field-row">
       <div class="field"><label>Stock</label><input id="pf_stock" type="number" value="${p.stock}"></div>
       <div class="field"><label>Low-stock alert at</label><input id="pf_low" type="number" value="${p.low_stock_at??3}"></div>
@@ -568,16 +581,21 @@ window.productForm = (id)=>{
       <button class="btn" id="pf_save" onclick="saveProduct(${id||'null'})">Save</button>
     </div>`);
 };
+window.pfCostTotal = ()=>{
+  const buy=parseInt($('#pf_buy').value)||0, ship=parseInt($('#pf_ship').value)||0, pack=parseInt($('#pf_pack').value)||0;
+  $('#pf_cost').value = buy+ship+pack;
+};
 window.saveProduct = async (id)=>{
   const btn=$('#pf_save'); btn.innerHTML='<span class="spin"></span>';
   try{
     const incRaw=$('#pf_inc').value.trim();
+    const buy=parseInt($('#pf_buy').value)||0, ship=parseInt($('#pf_ship').value)||0, pack=parseInt($('#pf_pack').value)||0;
     const rec = {
       name:$('#pf_name').value.trim(), cat:$('#pf_cat').value,
       tag:$('#pf_tag').value.trim()||null,
       price:parseInt($('#pf_price').value)||0,
       was:parseInt($('#pf_was').value)||null,
-      cost:parseInt($('#pf_cost').value)||0,
+      buy_price:buy, ship_cost:ship, pack_cost:pack, cost:buy+ship+pack,
       stock:parseInt($('#pf_stock').value)||0,
       low_stock_at:parseInt($('#pf_low').value)||3,
       description:$('#pf_desc').value.trim()||null,
@@ -674,6 +692,77 @@ window.delCode = async (id)=>{
 };
 
 /* ====================================================================== */
+/*  EXPENSES                                                              */
+/* ====================================================================== */
+const EXP_CATS = ['packaging','shipping','stock','transport','marketing','rent','other'];
+function monthKey(d){ const x=new Date(d); return x.getFullYear()+'-'+x.getMonth(); }
+function renderExpenses(){
+  const ex = DATA.expenses;
+  const total = ex.reduce((s,e)=>s+e.amount,0);
+  const thisMonth = ex.filter(e=>monthKey(e.spent_on)===monthKey(new Date())).reduce((s,e)=>s+e.amount,0);
+  const byCat={}; ex.forEach(e=>byCat[e.category]=(byCat[e.category]||0)+e.amount);
+  const catTotal=Object.values(byCat).reduce((a,b)=>a+b,0)||1;
+  $('#content').innerHTML = `
+  <div class="page-head"><div><h1>Expenses</h1><p>Every business cost — so your profit is the real figure.</p></div>
+    <button class="btn" onclick="expenseForm()">+ Add expense</button></div>
+  <div class="kpis">
+    <div class="kpi"><div class="lbl">Total expenses</div><div class="val">${ksh(total)}</div><div class="sub">${ex.length} entries</div></div>
+    <div class="kpi"><div class="lbl">This month</div><div class="val">${ksh(thisMonth)}</div><div class="sub">${new Date().toLocaleDateString('en-KE',{month:'long'})}</div></div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <h2>All expenses</h2>
+      ${ex.length? `<div class="tbl-wrap"><table>
+        <thead><tr><th>Date</th><th>Category</th><th>Note</th><th class="r">Amount</th><th></th></tr></thead>
+        <tbody>${ex.map(e=>`<tr>
+          <td class="tiny muted">${fmtDate(e.spent_on)}</td>
+          <td><span class="pill st-confirmed" style="text-transform:capitalize">${esc(e.category)}</span></td>
+          <td>${esc(e.description||'')}</td>
+          <td class="r"><b>${ksh(e.amount)}</b></td>
+          <td class="r"><button class="btn danger sm" onclick="delExpense('${e.id}')">✕</button></td>
+        </tr>`).join('')}</tbody></table></div>`
+      : '<div class="empty">No expenses logged yet. Add your first — e.g. a packaging restock.</div>'}
+    </div>
+    <div class="card">
+      <h2>By category</h2>
+      ${Object.keys(byCat).length? `<div style="display:grid;gap:13px">${Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([cat,amt])=>`
+        <div><div style="display:flex;justify-content:space-between;font-size:.86rem;margin-bottom:5px"><span style="text-transform:capitalize">${esc(cat)}</span><b>${ksh(amt)}</b></div>
+        <div class="bar-track"><div class="bar" style="width:${Math.round(amt/catTotal*100)}%"></div></div></div>`).join('')}</div>`
+      : '<div class="empty">Nothing yet.</div>'}
+    </div>
+  </div>`;
+}
+window.expenseForm = ()=>{
+  const today=new Date().toISOString().slice(0,10);
+  modal(`
+    <h2>Add expense</h2>
+    <div class="field-row">
+      <div class="field"><label>Date</label><input id="ef_date" type="date" value="${today}"></div>
+      <div class="field"><label>Category</label><select id="ef_cat">${EXP_CATS.map(c=>`<option value="${c}" style="text-transform:capitalize">${c[0].toUpperCase()+c.slice(1)}</option>`).join('')}</select></div>
+    </div>
+    <div class="field"><label>Amount (KSh)</label><input id="ef_amt" type="number" placeholder="5000"></div>
+    <div class="field"><label>Note (optional)</label><input id="ef_desc" placeholder="e.g. 100 gift boxes from supplier"></div>
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn" onclick="saveExpense()">Save expense</button>
+    </div>`);
+};
+window.saveExpense = async ()=>{
+  const amount=parseInt($('#ef_amt').value)||0;
+  if(!amount){ toast('Enter an amount'); return; }
+  const rec={ spent_on:$('#ef_date').value||new Date().toISOString().slice(0,10),
+    category:$('#ef_cat').value, amount, description:$('#ef_desc').value.trim()||null };
+  const { error } = await sb.from('expenses').insert(rec);
+  if(error){ toast('Error: '+error.message); return; }
+  closeModal(); await loadAll(); render('expenses'); toast('Expense saved ✓');
+};
+window.delExpense = async (id)=>{
+  if(!confirm('Delete this expense?')) return;
+  await sb.from('expenses').delete().eq('id',id);
+  await loadAll(); render('expenses'); toast('Deleted');
+};
+
+/* ====================================================================== */
 /*  SUBSCRIBERS                                                           */
 /* ====================================================================== */
 function renderSubscribers(){
@@ -703,6 +792,8 @@ function renderAnalytics(){
   const totalCost = soldArr.reduce((s,x)=>s+x.cost,0);
   const totalProfit = totalRev - totalCost;
   const hasCost = totalCost>0;
+  const totalExpenses = DATA.expenses.reduce((s,e)=>s+e.amount,0);
+  const netProfit = totalProfit - totalExpenses;
   // products with zero sales
   const soldIds = new Set(Object.values(sold).map(s=>s.product_id).filter(Boolean));
   const notMoving = DATA.products.filter(p=>p.active && !soldIds.has(p.id));
@@ -725,9 +816,11 @@ function renderAnalytics(){
 
   <div class="kpis">
     <div class="kpi"><div class="lbl">Total revenue</div><div class="val">${ksh(totalRev)}</div><div class="sub">all non-cancelled sales</div></div>
-    <div class="kpi"><div class="lbl">Cost of goods</div><div class="val">${hasCost?ksh(totalCost):'—'}</div><div class="sub">${hasCost?'what they cost you':'add cost prices in Stock'}</div></div>
-    <div class="kpi"><div class="lbl">Gross profit</div><div class="val" style="color:${hasCost?'var(--ok)':'var(--muted)'}">${hasCost?ksh(totalProfit):'—'}</div><div class="sub">${hasCost?'revenue − cost':'set costs to unlock'}</div></div>
-    <div class="kpi"><div class="lbl">Profit margin</div><div class="val">${hasCost&&totalRev?Math.round(totalProfit/totalRev*100)+'%':'—'}</div><div class="sub">of revenue</div></div>
+    <div class="kpi"><div class="lbl">Cost of goods</div><div class="val">${hasCost?ksh(totalCost):'—'}</div><div class="sub">${hasCost?'what sold items cost':'add costs in Stock'}</div></div>
+    <div class="kpi"><div class="lbl">Gross profit</div><div class="val" style="color:${hasCost?'var(--ok)':'var(--muted)'}">${hasCost?ksh(totalProfit):'—'}</div><div class="sub">revenue − cost of goods</div></div>
+    <div class="kpi"><div class="lbl">Expenses</div><div class="val">${totalExpenses?ksh(totalExpenses):'—'}</div><div class="sub">${totalExpenses?'packaging, rent, etc.':'log them in Expenses'}</div></div>
+    <div class="kpi" style="border-color:var(--line)"><div class="lbl">Net profit 💰</div><div class="val" style="color:${netProfit>=0?'var(--ok)':'var(--bad)'}">${(hasCost||totalExpenses)?ksh(netProfit):'—'}</div><div class="sub">what you actually make</div></div>
+    <div class="kpi"><div class="lbl">Profit margin</div><div class="val">${hasCost&&totalRev?Math.round(netProfit/totalRev*100)+'%':'—'}</div><div class="sub">net, of revenue</div></div>
   </div>
 
   <div class="card">
