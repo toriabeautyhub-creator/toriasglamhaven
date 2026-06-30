@@ -855,7 +855,8 @@ let sbClient = null, emailReady = false;
 async function syncCatalogue(){
   if(!sbClient) return;
   try{
-    const { data, error } = await sbClient.from('products').select('*');
+    const { data, error } = await sbClient.from('products')
+      .select('id,cat,name,price,was,tag,description,tip,image_url,includes,stock,active');
     if(error || !data) return;
     const byId = {}; data.forEach(d=>byId[d.id]=d);
     PRODUCTS.forEach(p=>{

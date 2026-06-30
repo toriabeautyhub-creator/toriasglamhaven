@@ -143,6 +143,7 @@ tr:last-child td{border-bottom:none}
     </div>
     <a class="nav-item on" data-tab="overview"><span class="ico">📊</span> Overview</a>
     <a class="nav-item" data-tab="orders"><span class="ico">🛍️</span> Orders <span class="badge" id="newOrdersBadge" style="display:none">0</span></a>
+    <a class="nav-item" data-tab="fulfilment"><span class="ico">📋</span> Packing <span class="badge" id="packBadge" style="display:none">0</span></a>
     <a class="nav-item" data-tab="stock"><span class="ico">📦</span> Stock <span class="badge" id="lowStockBadge" style="display:none">0</span></a>
     <a class="nav-item" data-tab="catalogue"><span class="ico">🖼️</span> Catalogue</a>
     <a class="nav-item" data-tab="discounts"><span class="ico">🏷️</span> Discounts</a>
@@ -260,16 +261,19 @@ async function loadAll(){
     $('#content').innerHTML='<div class="empty">Could not load data. Check your connection and that schema.sql was run.<br><br>'+esc(e.message||e)+'</div>';
   }
 }
+const NEEDS_PACKING = ['new','confirmed','paid'];
 function updateBadges(){
   const nNew = DATA.orders.filter(o=>o.status==='new').length;
   const nLow = DATA.products.filter(p=>p.active && p.stock<=p.low_stock_at).length;
-  const ob=$('#newOrdersBadge'), lb=$('#lowStockBadge');
+  const nPack = DATA.orders.filter(o=>NEEDS_PACKING.includes(o.status)).length;
+  const ob=$('#newOrdersBadge'), lb=$('#lowStockBadge'), pb=$('#packBadge');
   if(nNew){ ob.style.display='grid'; ob.textContent=nNew; } else ob.style.display='none';
   if(nLow){ lb.style.display='grid'; lb.textContent=nLow; } else lb.style.display='none';
+  if(nPack){ pb.style.display='grid'; pb.textContent=nPack; } else pb.style.display='none';
 }
 
 function render(tab){
-  const r = { overview:renderOverview, orders:renderOrders, stock:renderStock,
+  const r = { overview:renderOverview, orders:renderOrders, fulfilment:renderFulfilment, stock:renderStock,
     catalogue:renderCatalogue, discounts:renderDiscounts, subscribers:renderSubscribers, analytics:renderAnalytics };
   (r[tab]||renderOverview)();
 }
@@ -339,8 +343,8 @@ function unitsByProduct(){
   DATA.items.forEach(it=>{
     if(!okOrders.has(it.order_id)) return;
     const key = it.product_id ?? ('n:'+it.name);
-    if(!map[key]) map[key]={name:it.name,units:0,revenue:0,product_id:it.product_id};
-    map[key].units += it.qty; map[key].revenue += it.line_total;
+    if(!map[key]) map[key]={name:it.name,units:0,revenue:0,cost:0,product_id:it.product_id};
+    map[key].units += it.qty; map[key].revenue += it.line_total; map[key].cost += (it.cost||0)*it.qty;
   });
   return map;
 }
@@ -421,27 +425,91 @@ window.saveOrder = async id => {
 };
 
 /* ====================================================================== */
+/*  FULFILMENT / PACKING                                                  */
+/* ====================================================================== */
+function renderFulfilment(){
+  const queue = DATA.orders.filter(o=>NEEDS_PACKING.includes(o.status))
+    .sort((a,b)=>new Date(a.created_at)-new Date(b.created_at)); // oldest first
+  $('#content').innerHTML = `
+  <div class="page-head"><div><h1>Packing</h1><p>${queue.length} order${queue.length===1?'':'s'} to pack &amp; send. Oldest first — tick items as you pack.</p></div></div>
+  ${queue.length? queue.map(o=>{
+    const items = DATA.items.filter(i=>i.order_id===o.id);
+    return `<div class="card">
+      <h2 style="align-items:flex-start">
+        <span>${esc(o.order_no)} ${o.is_gift?'🎁':''} ${statusPill(o.status)}<div class="tiny muted" style="font-weight:400;margin-top:3px">${esc(o.customer_name||'')} · ${esc(o.customer_phone||'')} · ${fmtDateTime(o.created_at)}</div></span>
+        <button class="btn ghost sm" onclick="printSlip('${o.id}')">🖨️ Packing slip</button>
+      </h2>
+      <div style="background:var(--black-2);border:1px solid var(--line-2);border-radius:8px;padding:14px 16px;margin-bottom:12px">
+        ${items.map(i=>`<label style="display:flex;align-items:flex-start;gap:10px;padding:6px 0;cursor:pointer">
+          <input type="checkbox" style="width:auto;transform:scale(1.3);margin-top:3px">
+          <span><b>${i.qty}× ${esc(i.name)}</b>${i.includes?`<ul class="tiny muted" style="margin:3px 0 0 14px">${(i.includes||[]).map(x=>`<li>${esc(x)}</li>`).join('')}</ul><div class="tiny gold" style="margin-left:14px">⤷ custom box — confirm pieces with customer</div>`:''}</span>
+        </label>`).join('')}
+        ${o.is_gift?`<div class="tiny" style="margin-top:8px;color:var(--gold-2)">🎁 Include <b>${esc(o.occasion||'occasion')} card</b>${o.card_message?` — "${esc(o.card_message)}"`:''} + free gift</div>`:'<div class="tiny muted" style="margin-top:8px">Include free gift + occasion card</div>'}
+      </div>
+      <div class="tiny muted" style="margin-bottom:12px">📍 ${esc(o.delivery_type||'')} — ${esc(o.delivery_detail||'')}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${o.status!=='paid'?`<button class="btn ghost sm" onclick="advance('${o.id}','paid')">Mark paid</button>`:''}
+        <button class="btn sm" onclick="advance('${o.id}','packed')">✓ Packed</button>
+        <button class="btn sm" onclick="advance('${o.id}','delivered')">📦 Dispatched / delivered</button>
+        <a class="btn ghost sm" href="https://wa.me/${(o.customer_phone||'').replace(/[^0-9]/g,'').replace(/^0/,'254')}" target="_blank">💬 Message</a>
+      </div>
+    </div>`;}).join('')
+   : '<div class="card"><div class="empty">🎉 Nothing to pack — you\'re all caught up!</div></div>'}`;
+}
+window.advance = async (id, status)=>{
+  const { error } = await sb.from('orders').update({status}).eq('id',id);
+  if(error){ toast('Error: '+error.message); return; }
+  const o=DATA.orders.find(x=>x.id===id); o.status=status;
+  updateBadges(); renderFulfilment(); toast('Marked '+status+' ✓');
+};
+window.printSlip = (id)=>{
+  const o=DATA.orders.find(x=>x.id===id); if(!o) return;
+  const items=DATA.items.filter(i=>i.order_id===id);
+  const rows=items.map(i=>`<tr><td style="padding:6px 0;border-bottom:1px solid #ddd">☐ ${i.qty}× ${esc(i.name)}${i.includes?'<br><span style="font-size:12px;color:#666">'+(i.includes||[]).map(esc).join(' · ')+'</span>':''}</td></tr>`).join('');
+  const w=window.open('','_blank','width=420,height=640');
+  w.document.write(`<html><head><title>Packing slip ${esc(o.order_no)}</title>
+    <style>body{font-family:Georgia,serif;padding:28px;color:#111}h1{font-size:20px;margin:0}small{color:#666}
+    table{width:100%;border-collapse:collapse;margin-top:14px}.box{margin-top:16px;padding:12px;border:1px dashed #999;border-radius:6px;font-size:13px}</style></head>
+    <body>
+      <h1>Toria's Glam Haven</h1><small>Packing slip</small>
+      <p style="margin-top:14px"><b>${esc(o.order_no)}</b> ${o.is_gift?'🎁 GIFT':''}<br>
+      ${esc(o.customer_name||'')} · ${esc(o.customer_phone||'')}<br>
+      <small>${esc(o.delivery_type||'')} — ${esc(o.delivery_detail||'')}</small></p>
+      <table>${rows}</table>
+      <div class="box">☐ Free gift &nbsp; ☐ Occasion card${o.is_gift&&o.card_message?` ("${esc(o.card_message)}")`:''} &nbsp; ☐ Thank-you note</div>
+      <p style="margin-top:20px;font-size:22px;text-align:right"><b>Total: ${ksh(o.total)}</b></p>
+      <p style="text-align:center;color:#888;font-size:12px;margin-top:24px">Thank you for supporting this business 💛</p>
+      <script>window.onload=()=>window.print()<\/script>
+    </body></html>`);
+  w.document.close();
+};
+
+/* ====================================================================== */
 /*  STOCK                                                                 */
 /* ====================================================================== */
 function renderStock(){
   const p = DATA.products;
   $('#content').innerHTML = `
-  <div class="page-head"><div><h1>Stock</h1><p>Tap a number to edit. Out-of-stock items show "Sold out" on the shop.</p></div></div>
+  <div class="page-head"><div><h1>Stock</h1><p>Tap a number to edit. <b>Cost</b> is private (never shown on the shop) and powers your profit reports.</p></div></div>
   <div class="card"><div class="tbl-wrap"><table>
-    <thead><tr><th>Product</th><th>Category</th><th class="r">Price</th><th class="c">Stock</th><th class="c">Visible</th></tr></thead>
+    <thead><tr><th>Product</th><th>Category</th><th class="r">Cost</th><th class="r">Price</th><th class="r">Margin</th><th class="c">Stock</th><th class="c">Visible</th></tr></thead>
     <tbody>${p.map(pr=>{
       const cls = pr.stock<=0?'stock-out':(pr.stock<=pr.low_stock_at?'stock-low':'stock-ok');
+      const margin = pr.price>0 ? Math.round((pr.price-(pr.cost||0))/pr.price*100) : 0;
+      const mcls = (pr.cost||0)===0?'muted':(margin<30?'stock-low':'stock-ok');
       return `<tr>
         <td><b>${esc(pr.name)}</b>${pr.tag?` <span class="tiny gold">${esc(pr.tag)}</span>`:''}</td>
         <td class="muted">${esc(pr.cat)}</td>
-        <td class="r" style="width:120px"><input type="number" value="${pr.price}" style="text-align:right;padding:5px 7px" onchange="updProduct(${pr.id},'price',this.value)"></td>
-        <td class="c" style="width:100px"><input type="number" value="${pr.stock}" class="${cls}" style="text-align:center;padding:5px 7px;font-weight:700" onchange="updProduct(${pr.id},'stock',this.value)"></td>
+        <td class="r" style="width:110px"><input type="number" value="${pr.cost||0}" style="text-align:right;padding:5px 7px" onchange="updProduct(${pr.id},'cost',this.value)"></td>
+        <td class="r" style="width:110px"><input type="number" value="${pr.price}" style="text-align:right;padding:5px 7px" onchange="updProduct(${pr.id},'price',this.value)"></td>
+        <td class="r ${mcls}" style="width:70px">${(pr.cost||0)===0?'—':margin+'%'}</td>
+        <td class="c" style="width:90px"><input type="number" value="${pr.stock}" class="${cls}" style="text-align:center;padding:5px 7px;font-weight:700" onchange="updProduct(${pr.id},'stock',this.value)"></td>
         <td class="c"><input type="checkbox" ${pr.active?'checked':''} style="width:auto;transform:scale(1.3)" onchange="updProduct(${pr.id},'active',this.checked)"></td>
       </tr>`;}).join('')}
     </tbody></table></div></div>`;
 }
 window.updProduct = async (id, field, value)=>{
-  if(field==='price'||field==='stock') value = parseInt(value)||0;
+  if(field==='price'||field==='stock'||field==='cost') value = parseInt(value)||0;
   const { error } = await sb.from('products').update({[field]:value}).eq('id',id);
   if(error){ toast('Error: '+error.message); return; }
   const pr=DATA.products.find(x=>x.id===id); pr[field]=value;
@@ -481,6 +549,7 @@ window.productForm = (id)=>{
       <div class="field"><label>Price (KSh)</label><input id="pf_price" type="number" value="${p.price}"></div>
       <div class="field"><label>Was / compare-at (optional)</label><input id="pf_was" type="number" value="${p.was||''}"></div>
     </div>
+    <div class="field"><label>Cost price (KSh) — private, for profit reports</label><input id="pf_cost" type="number" value="${p.cost||0}"></div>
     <div class="field-row">
       <div class="field"><label>Stock</label><input id="pf_stock" type="number" value="${p.stock}"></div>
       <div class="field"><label>Low-stock alert at</label><input id="pf_low" type="number" value="${p.low_stock_at??3}"></div>
@@ -508,6 +577,7 @@ window.saveProduct = async (id)=>{
       tag:$('#pf_tag').value.trim()||null,
       price:parseInt($('#pf_price').value)||0,
       was:parseInt($('#pf_was').value)||null,
+      cost:parseInt($('#pf_cost').value)||0,
       stock:parseInt($('#pf_stock').value)||0,
       low_stock_at:parseInt($('#pf_low').value)||3,
       description:$('#pf_desc').value.trim()||null,
@@ -629,6 +699,10 @@ window.exportSubs = ()=>{
 function renderAnalytics(){
   const sold = unitsByProduct();
   const soldArr = Object.values(sold).sort((a,b)=>b.units-a.units);
+  const totalRev = soldArr.reduce((s,x)=>s+x.revenue,0);
+  const totalCost = soldArr.reduce((s,x)=>s+x.cost,0);
+  const totalProfit = totalRev - totalCost;
+  const hasCost = totalCost>0;
   // products with zero sales
   const soldIds = new Set(Object.values(sold).map(s=>s.product_id).filter(Boolean));
   const notMoving = DATA.products.filter(p=>p.active && !soldIds.has(p.id));
@@ -649,6 +723,13 @@ function renderAnalytics(){
   $('#content').innerHTML = `
   <div class="page-head"><div><h1>Analytics</h1><p>What's moving, what isn't, and where the money comes from.</p></div></div>
 
+  <div class="kpis">
+    <div class="kpi"><div class="lbl">Total revenue</div><div class="val">${ksh(totalRev)}</div><div class="sub">all non-cancelled sales</div></div>
+    <div class="kpi"><div class="lbl">Cost of goods</div><div class="val">${hasCost?ksh(totalCost):'—'}</div><div class="sub">${hasCost?'what they cost you':'add cost prices in Stock'}</div></div>
+    <div class="kpi"><div class="lbl">Gross profit</div><div class="val" style="color:${hasCost?'var(--ok)':'var(--muted)'}">${hasCost?ksh(totalProfit):'—'}</div><div class="sub">${hasCost?'revenue − cost':'set costs to unlock'}</div></div>
+    <div class="kpi"><div class="lbl">Profit margin</div><div class="val">${hasCost&&totalRev?Math.round(totalProfit/totalRev*100)+'%':'—'}</div><div class="sub">of revenue</div></div>
+  </div>
+
   <div class="card">
     <h2>Revenue — last 14 days</h2>
     <div style="display:flex;align-items:flex-end;gap:6px;height:160px;margin-top:10px">
@@ -663,8 +744,8 @@ function renderAnalytics(){
   <div class="grid-2">
     <div class="card">
       <h2>🔥 Best movers</h2>
-      ${soldArr.length? `<div class="tbl-wrap"><table><thead><tr><th>Product</th><th class="c">Sold</th><th class="r">Revenue</th></tr></thead>
-      <tbody>${soldArr.slice(0,10).map(s=>`<tr><td>${esc(s.name)}</td><td class="c"><b>${s.units}</b></td><td class="r">${ksh(s.revenue)}</td></tr>`).join('')}</tbody></table></div>`
+      ${soldArr.length? `<div class="tbl-wrap"><table><thead><tr><th>Product</th><th class="c">Sold</th><th class="r">Revenue</th><th class="r">Profit</th></tr></thead>
+      <tbody>${soldArr.slice(0,10).map(s=>`<tr><td>${esc(s.name)}</td><td class="c"><b>${s.units}</b></td><td class="r">${ksh(s.revenue)}</td><td class="r ${s.cost?'stock-ok':'muted'}">${s.cost?ksh(s.revenue-s.cost):'—'}</td></tr>`).join('')}</tbody></table></div>`
       :'<div class="empty">No sales yet.</div>'}
     </div>
     <div class="card">
