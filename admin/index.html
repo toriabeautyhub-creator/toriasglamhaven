@@ -400,10 +400,17 @@ window.orderDetail = id => {
     </div>
     <div class="field"><label>Internal notes</label><textarea id="ordNotes" rows="2" placeholder="e.g. M-Pesa confirmed, code XYZ123">${esc(o.notes||'')}</textarea></div>
     <div class="modal-actions">
+      <button class="btn danger" onclick="deleteOrder('${o.id}')">Delete</button>
       <button class="btn ghost" onclick="closeModal()">Close</button>
       <a class="btn ghost" href="https://wa.me/${(o.customer_phone||'').replace(/[^0-9]/g,'').replace(/^0/,'254')}" target="_blank">💬 WhatsApp</a>
       <button class="btn" onclick="saveOrder('${o.id}')">Save</button>
     </div>`);
+};
+window.deleteOrder = async id => {
+  if(!confirm('Permanently delete this order? Use this only for test or spam orders — real orders should be kept for your records.')) return;
+  const { error } = await sb.from('orders').delete().eq('id',id);
+  if(error){ toast('Error: '+error.message); return; }
+  closeModal(); await loadAll(); render('orders'); toast('Order deleted');
 };
 window.saveOrder = async id => {
   const status=$('#ordStatus').value, notes=$('#ordNotes').value;
