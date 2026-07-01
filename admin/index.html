@@ -107,12 +107,36 @@ tr:last-child td{border-bottom:none}
 .spin{display:inline-block;width:18px;height:18px;border:2px solid var(--line);border-top-color:var(--gold);border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle}
 @keyframes sp{to{transform:rotate(360deg)}}
 .mobile-only{display:none}
+
+/* search box */
+.searchwrap{position:relative;max-width:340px;margin-bottom:16px}
+.searchicon{position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:.5;font-size:.85rem;pointer-events:none}
+.searchbox{padding-left:34px}
+.none-row{display:none;text-align:center;color:var(--muted);padding:26px}
+
+/* help chip */
+.help{display:inline-grid;place-items:center;width:16px;height:16px;border-radius:50%;border:1px solid var(--line);color:var(--muted);font-size:.65rem;font-weight:700;cursor:help;margin-left:6px;vertical-align:middle}
+.help:hover{border-color:var(--gold);color:var(--gold-2)}
+
+/* toggle group */
+.seg{display:inline-flex;background:var(--black-2);border:1px solid var(--line-2);border-radius:8px;padding:3px;gap:2px}
+.seg button{padding:6px 14px;border-radius:6px;font-size:.82rem;font-weight:500;color:var(--muted)}
+.seg button.on{background:var(--grad);color:#1a1206;font-weight:600}
+
 @media(max-width:760px){
   #app{grid-template-columns:1fr}
-  .sidebar{position:fixed;left:-240px;z-index:40;transition:.25s;width:230px}
+  .sidebar{position:fixed;left:-240px;z-index:40;transition:.25s;width:236px;box-shadow:0 0 40px rgba(0,0,0,.6)}
   .sidebar.open{left:0}
+  .nav-item{padding:13px 12px}                 /* bigger tap targets */
   .mobile-only{display:inline-flex}
-  .main{padding:18px}
+  .main{padding:16px}
+  .page-head h1{font-size:1.4rem}
+  .kpi .val{font-size:1.6rem}
+  input,select,textarea{padding:11px 12px;font-size:16px}  /* 16px stops iOS zoom */
+  .modal{padding:20px}
+  .searchwrap{max-width:100%}
+  /* dim page behind the open menu */
+  .sidebar.open::after{content:"";position:fixed;inset:0 0 0 236px;background:rgba(0,0,0,.5);z-index:-1}
 }
 </style>
 </head>
@@ -192,6 +216,20 @@ const fmtDate = d => new Date(d).toLocaleDateString('en-KE',{day:'numeric',month
 const fmtDateTime = d => new Date(d).toLocaleString('en-KE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
 let toastT;
 function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2600); }
+/* Live search box (filters visible rows without losing focus). */
+function searchBox(tableId, placeholder){
+  return `<div class="searchwrap"><span class="searchicon">🔎</span><input class="searchbox" placeholder="${placeholder}" oninput="filterTable('${tableId}',this.value)" onkeydown="if(event.key==='Escape'){this.value='';filterTable('${tableId}','')}"></div>`;
+}
+function filterTable(id, q){
+  q=(q||'').trim().toLowerCase();
+  const rows = document.querySelectorAll('#'+id+' tbody tr');
+  let shown=0;
+  rows.forEach(tr=>{ const hit = !q || tr.textContent.toLowerCase().includes(q); tr.style.display = hit?'':'none'; if(hit) shown++; });
+  const none = document.getElementById(id+'-none');
+  if(none) none.style.display = shown? 'none':'block';
+}
+/* Small "?" help chip with hover explanation. */
+function help(text){ return `<span class="help" title="${text.replace(/"/g,'&quot;')}">?</span>`; }
 function modal(html){ $('#modalContent').innerHTML=html; $('#modalBg').classList.add('show'); }
 function closeModal(){ $('#modalBg').classList.remove('show'); }
 $('#modalBg').addEventListener('click',e=>{ if(e.target.id==='modalBg') closeModal(); });
@@ -338,10 +376,10 @@ function topSellersHtml(limit){
       <div style="display:flex;align-items:center;gap:10px"><div class="bar-track"><div class="bar" style="width:${Math.round(p.units/max*100)}%"></div></div><span class="tiny muted">${ksh(p.revenue)}</span></div>
     </div>`).join('')}</div>`;
 }
-function unitsByProduct(){
+function unitsByProduct(allowedIds){
   const map={};
-  // only count non-cancelled orders
-  const okOrders = new Set(DATA.orders.filter(o=>o.status!=='cancelled').map(o=>o.id));
+  // only count non-cancelled orders (optionally limited to a date-scoped set)
+  const okOrders = new Set(DATA.orders.filter(o=>o.status!=='cancelled' && (!allowedIds || allowedIds.has(o.id))).map(o=>o.id));
   DATA.items.forEach(it=>{
     if(!okOrders.has(it.order_id)) return;
     const key = it.product_id ?? ('n:'+it.name);
@@ -364,7 +402,8 @@ function renderOrders(){
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
       ${['all',...STATUSES].map(s=>`<button class="btn ${orderFilter===s?'':'ghost'} sm" onclick="setOrderFilter('${s}')">${s[0].toUpperCase()+s.slice(1)}${s!=='all'?` (${DATA.orders.filter(o=>o.status===s).length})`:''}</button>`).join('')}
     </div>
-    ${list.length? `<div class="tbl-wrap"><table>
+    ${searchBox('ordersTable','Search by name, phone or order number…')}
+    ${list.length? `<div class="tbl-wrap"><table id="ordersTable">
       <thead><tr><th>Order</th><th>Customer</th><th>Delivery</th><th>Date</th><th>Status</th><th class="r">Total</th></tr></thead>
       <tbody>${list.map(o=>`<tr class="row-click" onclick="orderDetail('${o.id}')">
         <td><b>${esc(o.order_no)}</b>${o.is_gift?' 🎁':''}${o.discount_code?` <span class="tiny gold">${esc(o.discount_code)}</span>`:''}</td>
@@ -373,7 +412,7 @@ function renderOrders(){
         <td class="tiny muted">${fmtDateTime(o.created_at)}</td>
         <td>${statusPill(o.status)}</td>
         <td class="r"><b>${ksh(o.total)}</b></td></tr>`).join('')}
-      </tbody></table></div>`
+      </tbody></table><div id="ordersTable-none" class="none-row">No orders match your search.</div></div>`
       : '<div class="empty">No orders in this view.</div>'}
   </div>`;
 }
@@ -493,8 +532,8 @@ function renderStock(){
   const p = DATA.products;
   $('#content').innerHTML = `
   <div class="page-head"><div><h1>Stock</h1><p>Tap a number to edit. <b>Cost</b> is private (never shown on the shop) and powers your profit reports.</p></div></div>
-  <div class="card"><div class="tbl-wrap"><table>
-    <thead><tr><th>Product</th><th>Category</th><th class="r">Cost</th><th class="r">Price</th><th class="r">Margin</th><th class="c">Stock</th><th class="c">Visible</th></tr></thead>
+  <div class="card">${searchBox('stockTable','Search products…')}<div class="tbl-wrap"><table id="stockTable">
+    <thead><tr><th>Product</th><th>Category</th><th class="r">Cost ${help('Total cost per item (buying + shipping + packaging). Set the breakdown in Catalogue → Edit.')}</th><th class="r">Price</th><th class="r">Margin ${help('How much of the price is profit, before business expenses.')}</th><th class="c">Stock</th><th class="c">Visible</th></tr></thead>
     <tbody>${p.map(pr=>{
       const cls = pr.stock<=0?'stock-out':(pr.stock<=pr.low_stock_at?'stock-low':'stock-ok');
       const margin = pr.price>0 ? Math.round((pr.price-(pr.cost||0))/pr.price*100) : 0;
@@ -508,7 +547,7 @@ function renderStock(){
         <td class="c" style="width:90px"><input type="number" value="${pr.stock}" class="${cls}" style="text-align:center;padding:5px 7px;font-weight:700" onchange="updProduct(${pr.id},'stock',this.value)"></td>
         <td class="c"><input type="checkbox" ${pr.active?'checked':''} style="width:auto;transform:scale(1.3)" onchange="updProduct(${pr.id},'active',this.checked)"></td>
       </tr>`;}).join('')}
-    </tbody></table></div></div>`;
+    </tbody></table><div id="stockTable-none" class="none-row">No products match your search.</div></div></div>`;
 }
 window.updProduct = async (id, field, value)=>{
   if(field==='price'||field==='stock'||field==='cost') value = parseInt(value)||0;
@@ -525,7 +564,7 @@ function renderCatalogue(){
   $('#content').innerHTML = `
   <div class="page-head"><div><h1>Catalogue</h1><p>Add new products with photos. All ${DATA.products.length} pieces are managed here.</p></div>
     <button class="btn" onclick="productForm()">+ New product</button></div>
-  <div class="card"><div class="tbl-wrap" id="catTbl"><table>
+  <div class="card">${searchBox('catTable','Search products…')}<div class="tbl-wrap"><table id="catTable">
     <thead><tr><th>Product</th><th>Category</th><th class="r">Price</th><th class="r">Was</th><th>Tag</th><th class="c">Stock</th><th></th></tr></thead>
     <tbody>${DATA.products.map(p=>`<tr>
       <td><b>${esc(p.name)}</b>${!p.active?' <span class="pill st-cancelled">hidden</span>':''}</td>
@@ -535,7 +574,7 @@ function renderCatalogue(){
       <td>${p.tag?`<span class="gold tiny">${esc(p.tag)}</span>`:'—'}</td>
       <td class="c">${p.stock}</td>
       <td class="r"><button class="btn ghost sm" onclick="productForm(${p.id})">Edit</button></td>
-    </tr>`).join('')}</tbody></table></div></div>`;
+    </tr>`).join('')}</tbody></table><div id="catTable-none" class="none-row">No products match your search.</div></div></div>`;
 }
 window.productForm = (id)=>{
   const p = id? DATA.products.find(x=>x.id===id) : {cat:'earrings',price:'',stock:10,active:true,low_stock_at:3};
@@ -694,7 +733,7 @@ window.delCode = async (id)=>{
 /* ====================================================================== */
 /*  EXPENSES                                                              */
 /* ====================================================================== */
-const EXP_CATS = ['packaging','shipping','stock','transport','marketing','rent','other'];
+const EXP_CATS = ['stock','packaging','shipping','transport','marketing','airtime','salaries','rent','fees','other'];
 function monthKey(d){ const x=new Date(d); return x.getFullYear()+'-'+x.getMonth(); }
 function renderExpenses(){
   const ex = DATA.expenses;
@@ -712,7 +751,7 @@ function renderExpenses(){
   <div class="grid-2">
     <div class="card">
       <h2>All expenses</h2>
-      ${ex.length? `<div class="tbl-wrap"><table>
+      ${ex.length? `${searchBox('expTable','Search expenses…')}<div class="tbl-wrap"><table id="expTable">
         <thead><tr><th>Date</th><th>Category</th><th>Note</th><th class="r">Amount</th><th></th></tr></thead>
         <tbody>${ex.map(e=>`<tr>
           <td class="tiny muted">${fmtDate(e.spent_on)}</td>
@@ -720,7 +759,7 @@ function renderExpenses(){
           <td>${esc(e.description||'')}</td>
           <td class="r"><b>${ksh(e.amount)}</b></td>
           <td class="r"><button class="btn danger sm" onclick="delExpense('${e.id}')">✕</button></td>
-        </tr>`).join('')}</tbody></table></div>`
+        </tr>`).join('')}</tbody></table><div id="expTable-none" class="none-row">No expenses match your search.</div></div>`
       : '<div class="empty">No expenses logged yet. Add your first — e.g. a packaging restock.</div>'}
     </div>
     <div class="card">
@@ -769,10 +808,10 @@ function renderSubscribers(){
   $('#content').innerHTML = `
   <div class="page-head"><div><h1>Subscribers</h1><p>${DATA.subs.length} people on your Glam Circle list.</p></div>
     <button class="btn ghost" onclick="exportSubs()">⬇ Export CSV</button></div>
-  <div class="card">${DATA.subs.length? `<div class="tbl-wrap"><table>
+  <div class="card">${DATA.subs.length? `${searchBox('subsTable','Search emails…')}<div class="tbl-wrap"><table id="subsTable">
     <thead><tr><th>Email</th><th>Source</th><th class="r">Joined</th></tr></thead>
     <tbody>${DATA.subs.map(s=>`<tr><td><b>${esc(s.email)}</b></td><td class="muted">${esc(s.source||'')}</td><td class="r muted tiny">${fmtDateTime(s.created_at)}</td></tr>`).join('')}</tbody>
-    </table></div>`:'<div class="empty">No sign-ups yet. When someone enters their email for 10% off, they\'ll appear here.</div>'}</div>`;
+    </table><div id="subsTable-none" class="none-row">No emails match your search.</div></div>`:'<div class="empty">No sign-ups yet. When someone enters their email for 10% off, they\'ll appear here.</div>'}</div>`;
 }
 window.exportSubs = ()=>{
   const rows=[['email','source','joined'],...DATA.subs.map(s=>[s.email,s.source||'',s.created_at])];
@@ -785,14 +824,26 @@ window.exportSubs = ()=>{
 /* ====================================================================== */
 /*  ANALYTICS                                                             */
 /* ====================================================================== */
+let anRange = 'all';   // all | month | 30d
+window.setAnRange = r => { anRange=r; renderAnalytics(); };
+function inAnRange(dateStr){
+  if(anRange==='all') return true;
+  const d=new Date(dateStr), now=new Date();
+  if(anRange==='month') return d.getMonth()===now.getMonth() && d.getFullYear()===now.getFullYear();
+  if(anRange==='30d') return d >= new Date(now-30*864e5);
+  return true;
+}
+const RANGE_LABEL = { all:'all time', month:'this month', '30d':'last 30 days' };
 function renderAnalytics(){
-  const sold = unitsByProduct();
+  const scopedOrders = DATA.orders.filter(o=>o.status!=='cancelled' && inAnRange(o.created_at));
+  const allowedIds = new Set(scopedOrders.map(o=>o.id));
+  const sold = unitsByProduct(allowedIds);
   const soldArr = Object.values(sold).sort((a,b)=>b.units-a.units);
   const totalRev = soldArr.reduce((s,x)=>s+x.revenue,0);
   const totalCost = soldArr.reduce((s,x)=>s+x.cost,0);
   const totalProfit = totalRev - totalCost;
   const hasCost = totalCost>0;
-  const totalExpenses = DATA.expenses.reduce((s,e)=>s+e.amount,0);
+  const totalExpenses = DATA.expenses.filter(e=>inAnRange(e.spent_on)).reduce((s,e)=>s+e.amount,0);
   const netProfit = totalProfit - totalExpenses;
   // products with zero sales
   const soldIds = new Set(Object.values(sold).map(s=>s.product_id).filter(Boolean));
@@ -812,10 +863,17 @@ function renderAnalytics(){
   const totalCat=Object.values(catRev).reduce((a,b)=>a+b,0)||1;
 
   $('#content').innerHTML = `
-  <div class="page-head"><div><h1>Analytics</h1><p>What's moving, what isn't, and where the money comes from.</p></div></div>
+  <div class="page-head">
+    <div><h1>Analytics</h1><p>What's moving, what isn't, and where the money comes from.</p></div>
+    <div class="seg">
+      <button class="${anRange==='all'?'on':''}" onclick="setAnRange('all')">All time</button>
+      <button class="${anRange==='month'?'on':''}" onclick="setAnRange('month')">This month</button>
+      <button class="${anRange==='30d'?'on':''}" onclick="setAnRange('30d')">Last 30 days</button>
+    </div>
+  </div>
 
   <div class="kpis">
-    <div class="kpi"><div class="lbl">Total revenue</div><div class="val">${ksh(totalRev)}</div><div class="sub">all non-cancelled sales</div></div>
+    <div class="kpi"><div class="lbl">Revenue (${RANGE_LABEL[anRange]})</div><div class="val">${ksh(totalRev)}</div><div class="sub">${scopedOrders.length} orders</div></div>
     <div class="kpi"><div class="lbl">Cost of goods</div><div class="val">${hasCost?ksh(totalCost):'—'}</div><div class="sub">${hasCost?'what sold items cost':'add costs in Stock'}</div></div>
     <div class="kpi"><div class="lbl">Gross profit</div><div class="val" style="color:${hasCost?'var(--ok)':'var(--muted)'}">${hasCost?ksh(totalProfit):'—'}</div><div class="sub">revenue − cost of goods</div></div>
     <div class="kpi"><div class="lbl">Expenses</div><div class="val">${totalExpenses?ksh(totalExpenses):'—'}</div><div class="sub">${totalExpenses?'packaging, rent, etc.':'log them in Expenses'}</div></div>
@@ -861,17 +919,13 @@ function renderAnalytics(){
     <div class="card">
       <h2>At a glance</h2>
       <div class="kpis" style="margin:0">
-        <div class="kpi"><div class="lbl">Avg order value</div><div class="val">${ksh(avgOrder())}</div></div>
+        <div class="kpi"><div class="lbl">Avg order value</div><div class="val">${ksh(scopedOrders.length?Math.round(scopedOrders.reduce((s,o)=>s+o.total,0)/scopedOrders.length):0)}</div></div>
         <div class="kpi"><div class="lbl">Total units sold</div><div class="val">${soldArr.reduce((s,x)=>s+x.units,0)}</div></div>
-        <div class="kpi"><div class="lbl">Gift orders</div><div class="val">${DATA.orders.filter(o=>o.is_gift&&o.status!=='cancelled').length}</div></div>
-        <div class="kpi"><div class="lbl">Codes redeemed</div><div class="val">${DATA.orders.filter(o=>o.discount_code&&o.status!=='cancelled').length}</div></div>
+        <div class="kpi"><div class="lbl">Gift orders</div><div class="val">${scopedOrders.filter(o=>o.is_gift).length}</div></div>
+        <div class="kpi"><div class="lbl">Codes redeemed</div><div class="val">${scopedOrders.filter(o=>o.discount_code).length}</div></div>
       </div>
     </div>
   </div>`;
-}
-function avgOrder(){
-  const ok=DATA.orders.filter(o=>o.status!=='cancelled');
-  return ok.length? Math.round(ok.reduce((s,o)=>s+o.total,0)/ok.length):0;
 }
 </script>
 </body>
