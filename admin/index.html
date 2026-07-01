@@ -41,6 +41,8 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold)}
 .login-card h1{font-size:1.5rem;margin-bottom:4px}
 .login-card form{margin-top:24px;display:grid;gap:12px;text-align:left}
 .brandmark{width:54px;height:54px;border-radius:50%;background:var(--grad);display:grid;place-items:center;margin:0 auto 16px;font-family:var(--serif);color:#1a1206;font-size:1.5rem;font-weight:600}
+.login-logo{width:118px;height:118px;object-fit:contain;margin:0 auto 12px;display:block}
+.side-logo{width:40px;height:40px;object-fit:contain;flex-shrink:0}
 
 /* ---- App shell ---- */
 #app{display:none;min-height:100vh;grid-template-columns:230px 1fr}
@@ -145,7 +147,7 @@ tr:last-child td{border-bottom:none}
 <!-- ============ LOGIN ============ -->
 <div id="login">
   <div class="login-card">
-    <div class="brandmark">T</div>
+    <img src="../torias-glam-haven-logo.svg" alt="Toria's Glam Haven" class="login-logo">
     <h1>Glam Haven <span class="gold">Management</span></h1>
     <p class="muted tiny" style="margin-top:6px">Private dashboard — staff only</p>
     <form id="loginForm">
@@ -162,7 +164,7 @@ tr:last-child td{border-bottom:none}
 <div id="app">
   <aside class="sidebar" id="sidebar">
     <div class="logo-row">
-      <div class="brandmark">T</div>
+      <img src="../torias-glam-haven-logo.svg" alt="Toria's Glam Haven" class="side-logo">
       <b>Glam Haven</b>
     </div>
     <a class="nav-item on" data-tab="overview"><span class="ico">📊</span> Overview</a>
