@@ -1025,6 +1025,7 @@ function renderCats(){
 
 function quickView(id){
   const p=PRODUCTS.find(x=>x.id===id); const onSale=p.was&&p.was>p.price;
+  if(window.gtag&&p) gtag('event','view_item',{currency:'KES',value:p.price,items:[{item_id:p.id,item_name:p.name,price:p.price}]});
   if(sbClient){ try{ sbClient.rpc('track_view',{ p_id:id }); }catch(e){} }
   const imgs = p.image_url ? [p.image_url] : imgKeysOf(p).map(imgSrc).filter(Boolean);
   let media;
@@ -1116,7 +1117,7 @@ function renderCart(){
     <button class="btn block" style="margin-top:24px" onclick="startCheckout()">Proceed to checkout</button>`;
 }
 
-function startCheckout(){ if(!cart.length){toast('Your bag is empty');return;} go('checkout'); buildRoutes(); toStep(1); }
+function startCheckout(){ if(!cart.length){toast('Your bag is empty');return;} if(window.gtag) gtag('event','begin_checkout',{currency:'KES',value:subtotal(),item_count:cart.reduce((s,c)=>s+c.qty,0)}); go('checkout'); buildRoutes(); toStep(1); }
 function buildRoutes(){ const r=document.getElementById('f_route'); if(r.options.length)return;
   r.innerHTML='<option value="">Select your route / area</option>'+Object.keys(MTAANI_ROUTES).map(k=>`<option>${k}</option>`).join(''); }
 function populateAgents(){ const route=document.getElementById('f_route').value; const a=document.getElementById('f_agent');
@@ -1202,6 +1203,7 @@ function orderDone(){
   ['step1','step2','step3','step4'].forEach(s=>document.getElementById(s).style.display='none');
   document.getElementById('stepDone').style.display='block';
   document.getElementById('doneInv').textContent=invNo;
+  if(window.gtag){ const d=DELIVERY[delivery]; const total=subtotal()-discountAmount()+(d?d.fee:0); gtag('event','purchase',{transaction_id:invNo,currency:'KES',value:total,items:cart.map(c=>({item_id:c.id,item_name:c.name,price:c.price,quantity:c.qty}))}); }
   const gn=document.getElementById('doneGiftNote');
   if(cart.some(c=>c.includes)){
     gn.style.display='block';
@@ -1293,6 +1295,7 @@ function subscribeNewsletter(){
   const input=document.getElementById('newsEmail');
   const email=(input.value||'').trim();
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ toast('Please enter a valid email'); input.focus(); return; }
+  if(window.gtag) gtag('event','sign_up',{method:'Glam Circle'});
   saveSubscriber(email);
   document.getElementById('newsRow').style.display='none';
   const done=document.getElementById('newsDone');
