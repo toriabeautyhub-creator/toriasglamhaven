@@ -31,6 +31,7 @@ while ($listener.IsListening) {
       $bytes = [System.IO.File]::ReadAllBytes($path)
       $ext = [System.IO.Path]::GetExtension($path).ToLower()
       if ($mime.ContainsKey($ext)) { $res.ContentType = $mime[$ext] }
+      $res.Headers.Add('Cache-Control', 'no-store, no-cache, must-revalidate')
       $res.ContentLength64 = $bytes.Length
       $res.OutputStream.Write($bytes, 0, $bytes.Length)
     } else {

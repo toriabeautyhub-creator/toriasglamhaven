@@ -4,6 +4,22 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+<!-- Google Analytics (GA4). Replace G-XXXXXXXXXX below with your Measurement ID. -->
+<script>
+  window.GA_MEASUREMENT_ID = 'G-XXXXXXXXXX';
+  (function(){
+    var id = window.GA_MEASUREMENT_ID;
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function(){ dataLayer.push(arguments); };
+    if(!id || id.indexOf('G-XXXX') === 0) return; /* no real ID set yet — stay dormant */
+    var s = document.createElement('script'); s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=' + id;
+    document.head.appendChild(s);
+    gtag('js', new Date());
+    gtag('config', id);
+  })();
+</script>
+
 <title>Toria's Glam Haven | Timeless Gold Plated Jewelry in Kenya, Earrings, Necklaces & Sets</title>
 <meta name="description" content="Timeless gold plated jewelry in Kenya that won't tarnish and is gentle on sensitive skin. Earrings, necklaces, jewelry sets and gift sets for every occasion. Town, Mtaani or same day express pickup." />
 <meta name="keywords" content="jewelry Kenya, gold plated jewelry Nairobi, earrings for women Kenya, necklaces Kenya, jewelry gift sets Nairobi, jewelry that doesn't tarnish, hypoallergenic jewelry Kenya, jewelry for sensitive skin, gold hoops Kenya, pearl earrings Kenya, timeless jewelry Kenya" />
@@ -776,15 +792,15 @@ const PRODUCTS = [
   {id:22, cat:'earrings', name:'Entwine Knot Earrings', price:1100, img:'knotEar', tag:'New', desc:'Two slim gold bars looped into a soft knot, falling as a delicate drop. Understated, modern and easy to wear all day.', tip:'Small enough for the office, pretty enough for the evening. Suits any neckline and looks lovely with your hair tucked back.'},
   {id:21, cat:'earrings', name:'Gilded Trio Earrings', price:1900, img:'gildedTrio', tag:'New', desc:'A trio of earrings in one box: chunky doorknocker hoops, dainty interlocking hoops and tiny crystal studs. Three looks, endless mixing.', tip:'Wear one pair at a time or mix across multiple piercings for a curated ear. The bold hoops love a simple neckline.'},
   {id:31, cat:'earrings', name:'Cascade Link Drops', price:1300, img:'linkDrops', tag:'New', desc:'Two interlocking gold ovals that drop from a neat stud, a little chain link of movement. Modern, fluid and easy to wear.', tip:'Small but full of character. Suits any neckline and looks great worn with your hair tucked back.'},
-  {id:6, cat:'necklaces', name:'Emerald Noir Pendant', price:1350, img:'emerald', tag:'Best Seller', desc:'Emerald green stone framed in gold on a figaro chain.', tip:'The figaro chain sits best on a V neck, scoop or open collar. Layer it with a shorter chain for depth, or wear it alone over a plain top to let the emerald green stone pop.'},
+  {id:6, cat:'necklaces', name:'Emerald Isle Pendant', price:1350, img:'emerald', tag:'Best Seller', desc:'Emerald green stone framed in gold on a figaro chain.', tip:'The figaro chain sits best on a V neck, scoop or open collar. Layer it with a shorter chain for depth, or wear it alone over a plain top to let the emerald green stone pop.'},
   {id:7, cat:'necklaces', name:'Amethyst Glow Necklace', price:1250, img:null, desc:'A soft amethyst pendant on a fine gold chain.', tip:'A fine, delicate chain that loves a crew neck or button down. Beautiful layered with a longer pendant for an effortless stacked look.'},
   {id:23, cat:'necklaces', name:'Pearl Cascade Lariat', price:1800, img:'neckPearlLariat', tag:'New', desc:'A delicate gold lariat scattered with mother of pearl discs that cascade into a soft drop. Elegant movement that draws the eye.', tip:'Made for an open or V neckline. Lovely on its own for a date or event, the drop draws the eye down beautifully.'},
   {id:24, cat:'necklaces', name:'Onyx Cascade Lariat', price:1800, img:'neckOnyxLariat', tag:'New', desc:'The same graceful lariat in deep black onyx discs on fine gold. Bold, modern and effortlessly chic.', tip:'Striking against an open neckline or a simple top. A statement piece for evenings and special occasions.'},
-  {id:25, cat:'necklaces', name:'Baroque Pearl Pendant', price:1500, img:'neckBaroquePearl', tag:'New', desc:'A single baroque pearl cradled in molten gold on a fine chain. Organic, romantic and one of a kind in feel.', tip:'A dainty everyday piece. Beautiful layered with a longer chain, or worn alone with a crew or scoop neck.'},
+  {id:25, cat:'necklaces', name:'Pearl Drop Pendant', price:1500, img:'neckBaroquePearl', tag:'New', desc:'A single pearl cradled in soft gold on a fine chain. Romantic, delicate and easy to love.', tip:'A dainty everyday piece. Beautiful layered with a longer chain, or worn alone with a crew or scoop neck.'},
   {id:26, cat:'necklaces', name:'Gilded Link Pendant', price:1300, img:'neckGildedLink', tag:'New', desc:'A ribbed oval link pendant on a fine gold chain. Clean, architectural and easy to wear with everything.', tip:'A modern minimalist piece for the everyday. Suits any neckline and layers well with finer chains.'},
-  {id:27, cat:'necklaces', name:'Eternity Swirl Pendant', price:1300, img:'neckSwirl', tag:'New', desc:'A softly swirled open circle in warm gold, a symbol of endless connection on a fine chain.', tip:'Simple and meaningful, lovely for gifting. Wears beautifully with a crew, scoop or open neckline.'},
-  {id:28, cat:'necklaces', name:'Union Twin Pendant', price:1300, img:'neckUnionRings', tag:'New', desc:'Two interlocking gold rings, a delicate symbol of togetherness, on a fine chain. Subtle and sentimental.', tip:'A dainty everyday piece and a thoughtful gift. Layers beautifully or stands alone on a simple neckline.'},
-  {id:29, cat:'necklaces', name:'Scarlet Solitaire Pendant', price:1300, img:'neckScarlet', tag:'New', desc:'A single scarlet stone in a classic gold setting, glowing with colour on a fine chain. A pop of bold elegance.', tip:'Lovely against a plain neckline where the colour can shine. Perfect for adding warmth to any outfit.'},
+  {id:27, cat:'necklaces', name:'Golden Swirl Pendant', price:1300, img:'neckSwirl', tag:'New', desc:'A softly swirled open circle in warm gold, a symbol of endless connection on a fine chain.', tip:'Simple and meaningful, lovely for gifting. Wears beautifully with a crew, scoop or open neckline.'},
+  {id:28, cat:'necklaces', name:'Eternal Bond Pendant', price:1300, img:'neckUnionRings', tag:'New', desc:'Two interlocking gold rings, a delicate symbol of togetherness, on a fine chain. Subtle and sentimental.', tip:'A dainty everyday piece and a thoughtful gift. Layers beautifully or stands alone on a simple neckline.'},
+  {id:29, cat:'necklaces', name:'Ruby Glow Pendant', price:1300, img:'neckScarlet', tag:'New', desc:'A single ruby red stone in a classic gold setting, glowing with colour on a fine chain. A pop of bold elegance.', tip:'Lovely against a plain neckline where the colour can shine. Perfect for adding warmth to any outfit.'},
   {id:30, cat:'necklaces', name:'Helios Sunray Pendant', price:1500, img:'neckSunray', tag:'New', desc:'A radiant half sun of gold rays on a fine chain. Bold, sculptural and full of warmth.', tip:'A statement pendant for an open neckline. Wears beautifully from day to evening and turns heads.'},
   {id:32, cat:'necklaces', name:'Black Opal Trio Necklace', price:1500, img:'blackOpalTrio', tag:'New', desc:'Three black opal discs framed in gold along a fine chain, a sleek modern station necklace. Bold, glossy and effortlessly chic.', tip:'Sits beautifully on an open or crew neckline. A striking everyday piece that pairs with almost anything.'},
   {id:8, cat:'sets', name:'Celestial Halo Set', price:2150, imgs:['opalSet','opalineHalo'], tag:'Best Seller', desc:'An oval opal glow cabochon framed in a delicate beaded gold halo, with a matching pendant and studs. Arrives gift boxed.', tip:'A ready made match, no guesswork. The pendant suits a scoop or V neckline and the studs keep it balanced. Ideal for weddings, dates and special occasions.'},
@@ -1035,7 +1051,6 @@ function quickView(id){
     <p style="color:var(--muted-d);font-size:.9rem;margin:12px 0 10px">${p.desc||''}</p>
     ${p.tip?`<div style="background:rgba(201,162,75,.07);border:1px solid var(--line-d);border-radius:4px;padding:11px 13px;margin-bottom:12px"><div style="font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold-2);margin-bottom:5px">How to style it</div><p style="color:var(--champagne);font-size:.85rem;line-height:1.6">${p.tip}</p></div>`:''}
     ${p.includes?`<div class="pv-includes"><div class="h">What's inside the box</div><ul>${p.includes.map(i=>`<li>${i}</li>`).join('')}</ul><p class="note">Every box is custom made to your preference. You pick one of each item from any of the pieces on our website, and we put it together for you. Every gift comes in a gift box.</p></div>`:''}
-    ${!p.includes?`<p style="color:var(--gold);font-size:.78rem;margin-bottom:18px">Gold plated stainless steel, tarnish resistant and gentle on sensitive skin. Free gift with every order.</p>`:''}
     <button class="btn block" onclick="addToCart(${p.id});closeModal()">Add to Bag</button>`;
   document.getElementById('modal').classList.add('show');
   if(imgs.length>1) wirePvSlider();
@@ -1064,7 +1079,7 @@ function pvGo(i){ const sl=document.getElementById('pvSlider'); if(sl){ sl.scrol
 function pvStep(d){ const sl=document.getElementById('pvSlider'); if(!sl) return; const n=sl.children.length; let i=Math.round(sl.scrollLeft/sl.clientWidth)+d; i=Math.max(0,Math.min(n-1,i)); sl.scrollTo({left:sl.clientWidth*i,behavior:'smooth'}); pvAutoStart(sl); }
 function closeModal(){ clearInterval(pvTimer); document.getElementById('modal').classList.remove('show'); }
 
-function addToCart(id){ const p=PRODUCTS.find(x=>x.id===id); if(p&&p.stock!=null&&p.stock<=0){ toast('Sorry, that piece is sold out'); return; } const ex=cart.find(c=>c.id===id); if(ex)ex.qty++; else cart.push({...p,qty:1}); updateCount(); toast('Added to your bag'); }
+function addToCart(id){ const p=PRODUCTS.find(x=>x.id===id); if(p&&p.stock!=null&&p.stock<=0){ toast('Sorry, that piece is sold out'); return; } const ex=cart.find(c=>c.id===id); if(ex)ex.qty++; else cart.push({...p,qty:1}); updateCount(); toast('Added to your bag'); if(window.gtag&&p) gtag('event','add_to_cart',{currency:'KES',value:p.price,items:[{item_id:p.id,item_name:p.name,price:p.price}]}); }
 function updateCount(){ document.getElementById('cartCount').textContent = cart.reduce((s,c)=>s+c.qty,0); }
 function changeQty(id,d){ const c=cart.find(x=>x.id===id); c.qty+=d; if(c.qty<=0)cart=cart.filter(x=>x.id!==id); updateCount(); renderCart(); }
 function removeItem(id){ cart=cart.filter(x=>x.id!==id); updateCount(); renderCart(); }
@@ -1085,7 +1100,7 @@ function renderCart(){
   const body=document.getElementById('cartBody');
   if(!cart.length){ body.innerHTML=`<div class="empty"><p>Your bag is empty.</p><br><button class="btn" onclick="shop('all')">Start shopping</button></div>`; return; }
   const disc=discountAmount();
-  body.innerHTML = cart.map(c=>{ const s=imgSrc(c.img);
+  body.innerHTML = cart.map(c=>{ const s=firstImg(c);
     return `<div class="line">
       ${s?`<img class="thumb" src="${s}">`:`<div class="thumb ph"></div>`}
       <div><div class="nm">${c.name}</div><div class="meta">${LABELS[c.cat]} · ${ksh(c.price)}</div></div>
@@ -1096,7 +1111,6 @@ function renderCart(){
     <div class="totes">
       <div class="r"><span>Subtotal</span><span>${ksh(subtotal())}</span></div>
       ${disc?`<div class="r disc"><span>Discount${discount?` (${discount.code})`:''}</span><span>- ${ksh(disc)}</span></div>`:''}
-      <div class="r"><span>Free gift &amp; occasion card</span><span style="color:var(--gold-2)">Included</span></div>
       <div class="r grand"><span>Estimated total</span><b>${ksh(subtotal()-disc)}</b></div>
     </div>
     <button class="btn block" style="margin-top:24px" onclick="startCheckout()">Proceed to checkout</button>`;
@@ -1212,6 +1226,7 @@ function sendWhatsApp(){
     giftBoxLines+='%0A%0AI would like to customize my gift box. Please help me pick the pieces (I will share the styles and colours I love from your website).';
   }
   const msg=`Hello Toria's Glam Haven!%0A%0A*Order ${invNo||genInv()}*%0AName: ${name}%0A%0A${items}%0A%0ADelivery: ${encodeURIComponent(deliveryDetail())}${discLine}${giftLine}${expLine}%0A*Total: ${ksh(total)}*${giftBoxLines}%0A%0APlease confirm my order. I'll pay via M-Pesa Paybill ${PAYBILL}, A/c ${ACCOUNT}.`;
+  if(window.gtag) gtag('event','whatsapp_order',{currency:'KES',value:total,item_count:cart.length});
   window.open(`https://wa.me/254707353520?text=${msg}`,'_blank');
 }
 
