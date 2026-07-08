@@ -17,6 +17,7 @@
     document.head.appendChild(s);
     gtag('js', new Date());
     gtag('config', id);
+    gtag('config', 'AW-18291606346'); /* Google Ads */
   })();
 </script>
 
@@ -1196,7 +1197,7 @@ function orderDone(){
   ['step1','step2','step3','step4'].forEach(s=>document.getElementById(s).style.display='none');
   document.getElementById('stepDone').style.display='block';
   document.getElementById('doneInv').textContent=invNo;
-  if(window.gtag){ const d=DELIVERY[delivery]; const total=subtotal()-discountAmount()+(d?d.fee:0); gtag('event','purchase',{transaction_id:invNo,currency:'KES',value:total,items:cart.map(c=>({item_id:c.id,item_name:c.name,price:c.price,quantity:c.qty}))}); }
+  if(window.gtag){ const d=DELIVERY[delivery]; const total=subtotal()-discountAmount()+(d?d.fee:0); gtag('event','purchase',{transaction_id:invNo,currency:'KES',value:total,items:cart.map(c=>({item_id:c.id,item_name:c.name,price:c.price,quantity:c.qty}))}); gtag('event','conversion',{send_to:'AW-18291606346/ZXR6CLjykMkcEMqGj5JE',transaction_id:invNo,value:total,currency:'KES'}); }
   const gn=document.getElementById('doneGiftNote');
   if(cart.some(c=>c.includes)){
     gn.style.display='block';
@@ -1220,8 +1221,9 @@ function sendWhatsApp(){
     boxes.forEach(c=>{ giftBoxLines+=`%0A${encodeURIComponent(c.name)}:`; c.includes.forEach(i=>{ giftBoxLines+=`%0A   - ${encodeURIComponent(i)}`; }); });
     giftBoxLines+='%0A%0AI would like to customize my gift box. Please help me pick the pieces (I will share the styles and colours I love from your website).';
   }
-  const msg=`Hello Toria's Glam Haven!%0A%0A*Order ${invNo||genInv()}*%0AName: ${name}%0A%0A${items}%0A%0ADelivery: ${encodeURIComponent(deliveryDetail())}${discLine}${giftLine}${expLine}%0A*Total: ${ksh(total)}*${giftBoxLines}%0A%0APlease confirm my order. I'll pay via M-Pesa Paybill ${PAYBILL}, A/c ${ACCOUNT}.`;
-  if(window.gtag) gtag('event','whatsapp_order',{currency:'KES',value:total,item_count:cart.length});
+  if(!invNo) invNo=genInv();
+  const msg=`Hello Toria's Glam Haven!%0A%0A*Order ${invNo}*%0AName: ${name}%0A%0A${items}%0A%0ADelivery: ${encodeURIComponent(deliveryDetail())}${discLine}${giftLine}${expLine}%0A*Total: ${ksh(total)}*${giftBoxLines}%0A%0APlease confirm my order. I'll pay via M-Pesa Paybill ${PAYBILL}, A/c ${ACCOUNT}.`;
+  if(window.gtag){ gtag('event','whatsapp_order',{currency:'KES',value:total,item_count:cart.length}); gtag('event','conversion',{send_to:'AW-18291606346/ZXR6CLjykMkcEMqGj5JE',transaction_id:invNo,value:total,currency:'KES'}); }
   window.open(`https://wa.me/254707353520?text=${msg}`,'_blank');
 }
 
