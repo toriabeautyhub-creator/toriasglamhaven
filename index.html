@@ -302,7 +302,10 @@ footer .flogo .n{font-family:'Yeseva One',var(--serif);font-size:1.6rem;color:va
 .faq-item p a{color:var(--gold);border-bottom:1px solid var(--line-d)}
 footer .copy{border-top:1px solid var(--line-d);margin-top:36px;padding-top:18px;text-align:center;font-size:.74rem;color:rgba(244,236,221,.4)}
 
-.wa-float{position:fixed;bottom:22px;right:22px;z-index:60;background:#1FA855;color:#fff;width:54px;height:54px;border-radius:50%;display:grid;place-items:center;font-size:1.5rem;box-shadow:0 8px 24px -6px rgba(31,168,85,.6)}
+.wa-float{position:fixed;bottom:22px;right:22px;z-index:60;background:#1FA855;color:#fff;border-radius:30px;display:flex;align-items:center;gap:9px;padding:10px 18px 10px 13px;box-shadow:0 8px 24px -6px rgba(31,168,85,.6);text-decoration:none;font-family:var(--sans);font-weight:600;font-size:.9rem;letter-spacing:.01em;transition:transform .2s,box-shadow .2s}
+.wa-float:hover{transform:translateY(-2px);box-shadow:0 12px 28px -6px rgba(31,168,85,.7)}
+.wa-float svg{flex:none}
+@media(max-width:520px){.wa-float{bottom:16px;right:16px;padding:9px 14px 9px 11px;font-size:.82rem;gap:7px}.wa-float svg{width:24px;height:24px}}
 
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:80;display:none;align-items:center;justify-content:center;padding:20px}
 .modal.show{display:flex}
@@ -730,7 +733,7 @@ footer .copy{border-top:1px solid var(--line-d);margin-top:36px;padding-top:18px
   <div class="copy">© 2024 Toria's Glam Haven. All rights reserved.</div>
 </footer>
 
-<a class="wa-float" href="https://wa.me/254707353520?text=Hello%20Toria's%20Glam%20Haven!%20I'd%20like%20to%20enquire%20about%20your%20jewelry." target="_blank" title="Chat on WhatsApp">💬</a>
+<a class="wa-float" href="https://wa.me/254707353520?text=Hello%20Toria's%20Glam%20Haven!%20I'd%20like%20to%20enquire%20about%20your%20jewelry." target="_blank" title="Chat on WhatsApp" aria-label="Chat on WhatsApp"><svg viewBox="0 0 32 32" width="30" height="30" fill="#fff" aria-hidden="true"><path d="M16.004 0h-.008C7.174 0 .002 7.174.002 16c0 3.5 1.128 6.744 3.046 9.38L1.05 31.05l5.86-1.874A15.9 15.9 0 0 0 16.004 32C24.83 32 32 24.826 32 16S24.83 0 16.004 0zm9.31 22.6c-.386 1.09-1.918 1.994-3.14 2.258-.836.178-1.928.32-5.604-1.204-4.7-1.948-7.726-6.724-7.962-7.034-.226-.31-1.9-2.53-1.9-4.826s1.168-3.424 1.638-3.904c.386-.394.844-.574 1.302-.574.148 0 .282.008.402.014.386.016.58.038.834.646.316.762 1.086 2.658 1.178 2.85.094.192.188.452.06.762-.12.32-.226.462-.452.712-.226.25-.44.442-.666.71-.206.234-.44.486-.18.93.26.434 1.156 1.906 2.48 3.086 1.71 1.524 3.13 1.996 3.62 2.198.364.15.798.114 1.064-.174.338-.37.756-.984 1.18-1.59.302-.434.684-.488 1.084-.338.408.142 2.588 1.22 3.03 1.44.442.222.734.328.842.512.108.19.108 1.09-.278 2.18z"/></svg><span>WhatsApp</span></a>
 
 <div class="modal" id="modal" onclick="if(event.target===this)closeModal()"><div class="box" id="modalBox"></div></div>
 <div class="toast" id="toast"></div>
